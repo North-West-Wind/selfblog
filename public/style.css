@@ -1,0 +1,97 @@
+body {
+	font-family: Kanit, Arial, Helvetica, sans-serif;
+	padding: 5vh 10vw;
+
+	/* dark mode color */
+	background-color: #242424;
+	color: aquamarine;
+}
+
+@media (prefers-color-scheme: light) {
+	body {
+		/* light mode color */
+		background-color: blanchedalmond;
+		color: darkslateblue;
+	}
+
+	a {
+		color: darkblue;
+	}
+
+	.button {
+		background-color: #242424;
+		color: aquamarine;
+		color: white;
+		text-align: center;
+	}
+}
+
+h1 {
+	font-size: 7.5vw;
+}
+
+h2 {
+	font-size: 3vw;
+}
+
+h3 {
+	margin: 0;
+	font-size: 2.25vw;
+}
+
+iframe {
+	border-style: solid;
+	width: 100%;
+	height: 50vh;
+}
+
+a {
+	text-decoration: underline;
+	color: burlywood;
+}
+
+a:hover {
+	filter: brightness(80%);
+}
+
+input {
+	font-family: Kanit, Arial, Helvetica, sans-serif;
+	width: 100%;
+	padding: 2vh;
+	margin: 1vh;
+	background-color: #464646;
+	color: antiquewhite;
+	border-style: solid;
+	border-radius: 1vh;
+	font-size: 2vw;
+}
+
+div.center {
+	margin: auto;
+}
+
+.flex {
+	display: flex;
+}
+
+.flex.vcenter {
+	align-items: center;
+}
+
+.flex.hcenter {
+	justify-content: center;
+}
+
+.button {
+	background-color: blanchedalmond;
+	color: darkslateblue;
+	text-align: center;
+	border-radius: 1vh;
+	font-size: 2vw;
+	padding: 2vh 3vh;
+}
+
+.button:hover {
+	filter: brightness(80%);
+	cursor: pointer;
+}
