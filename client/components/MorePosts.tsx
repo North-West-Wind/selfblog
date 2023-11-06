@@ -7,13 +7,13 @@ const MorePostsComponent: React.FC = () => {
 			if (res.ok) setPosts(await res.json());
 			else setPosts([]);
 		});
-	});
+	}, []);
 
 	return <>
 		{posts === undefined && <h2>Loading more posts...</h2>}
 		{Array.isArray(posts) && posts.length && <>
 			<h2>More Posts</h2>
-			{posts.map(p => <h3><a href={p.url}>{p.title}</a></h3>)}
+			{posts.map(p => <h3 key={p.title}><a href={p.url}>{p.title}</a></h3>)}
 			<h3><a href="/list">Show all...</a></h3>
 		</>}
 	</>

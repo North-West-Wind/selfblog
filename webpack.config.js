@@ -6,7 +6,8 @@ module.exports = {
     list: "./client/pages/list.tsx",
     new: "./client/pages/new.tsx",
     edit: "./client/pages/edit.tsx",
-    nav: "./client/pages/nav.tsx"
+    nav: "./client/pages/nav.tsx",
+    "404": "./client/pages/404.tsx"
   },
   module: {
     rules: [
@@ -27,6 +28,10 @@ module.exports = {
   },
   output: {
     filename: "[name].bundle.js",
-    path: path.resolve(__dirname, "public"),
+    path: path.resolve(__dirname, "public/bundle"),
   },
+  devtool: 'cheap-module-source-map',
+  optimization: {
+    minimize: false
+  }
 };

@@ -7,7 +7,7 @@ const LatestPostComponent: React.FC = () => {
 			if (!res.ok) setLatestPost(null);
 			else setLatestPost("/p/latest");
 		});
-	});
+	}, []);
 
 	return <>
 		{latestPost === undefined && <h2>Loading latest post...</h2>}

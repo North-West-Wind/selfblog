@@ -1,44 +1,35 @@
-body {
-	font-family: Kanit, Arial, Helvetica, sans-serif;
-	padding: 5vh 10vw;
-
-	/* dark mode color */
-	background-color: #242424;
-	color: aquamarine;
+:root {
+	--fg: rgb(95, 196, 162);
+	--bg: #242424;
+	--afg: burlywood; /* link color */
+	--bfg: darkslateblue; /* button color */
+	--bbg: blanchedalmond;
+	--ifg: antiquewhite; /* input color */
+	--ibg: #464646;
 }
 
 @media (prefers-color-scheme: light) {
-	body {
-		/* light mode color */
-		background-color: blanchedalmond;
-		color: darkslateblue;
+	:root {
+		--fg: darkslateblue;
+		--bg: blanchedalmond;
+		--afg: darkblue;
+		--bfg: rgb(95, 196, 162);
+		--bbg: #242424;
+		--ifg: #464646;
+		--ibg: antiquewhite;
 	}
+}
 
-	a {
-		color: darkblue;
-	}
-
-	.button {
-		background-color: #242424;
-		color: aquamarine;
-	}
-
-	.topbar, .topbar .button {
-		background-color: darkslateblue;
-		color: blanchedalmond;
-	}
-
-	.sidebar-button, .sidebar, .sidebar .button {
-		color: darkslateblue;
-	}
-
-	.sidebar, .sidebar .button {
-		background-color: blanchedalmond;
-	}
+body {
+	font-family: Kanit, Arial, Helvetica, sans-serif;
+	padding: 5vh 10vw;
+	background-color: var(--bg);
+	color: var(--fg);
 }
 
 h1 {
 	font-size: 7.5vw;
+	line-height: 100%;
 }
 
 h2 {
@@ -50,6 +41,10 @@ h3 {
 	font-size: max(2.25vw, 2vh);
 }
 
+p {
+	font-size: max(1.5vw, 1.5vh);
+}
+
 iframe {
 	border-style: solid;
 	width: 100%;
@@ -58,7 +53,7 @@ iframe {
 
 a {
 	text-decoration: underline;
-	color: burlywood;
+	color: var(--afg);
 }
 
 a:hover {
@@ -70,8 +65,8 @@ input {
 	width: 100%;
 	padding: 2vh;
 	margin: 1vh;
-	background-color: #464646;
-	color: antiquewhite;
+	background-color: var(--ibg);
+	color: var(--ifg);
 	border-style: solid;
 	border-radius: 1vh;
 	font-size: 2vw;
@@ -94,8 +89,8 @@ div.center {
 }
 
 .button {
-	background-color: blanchedalmond;
-	color: darkslateblue;
+	background-color: var(--bbg);
+	color: var(--bfg);
 	text-align: center;
 	border-radius: 1vh;
 	font-size: max(2vw, 4vh);
@@ -117,21 +112,21 @@ div.center {
 }
 
 .topbar {
-	background-color: aquamarine;
-	color: #242424;
+	background-color: var(--fg);
+	color: var(--bg);
 }
 
 .sidebar-button {
 	position: fixed;
-	color: aquamarine;
+	color: var(--fg);
 	font-size: 5vh;
 	top: 2vh;
 	left: 4vh;
 }
 
 .sidebar {
-	background-color: #242424;
-	color: aquamarine;
+	background-color: var(--bg);
+	color: var(--fg);
 	height: 100vh;
 	transition: transform ease .5s;
 }
@@ -142,20 +137,20 @@ div.center {
 
 .sidebar-close {
 	position: absolute;
-	color: aquamarine;
+	color: var(--fg);
 	font-size: 5vh;
 	top: 2vh;
 	right: 4vh;
 }
 
 .topbar .button {
-	background-color: aquamarine;
-	color: #242424;
+	background-color: var(--fg);
+	color: var(--bg);
 	border-radius: 0;
 }
 
 .sidebar .button {
-	background-color: #242424;
-	color: aquamarine;
+	background-color: var(--bg);
+	color: var(--fg);
 	border-radius: 0;
 }

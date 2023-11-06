@@ -7,7 +7,7 @@ const AllPostsComponent: React.FC = () => {
 			if (res.ok) setPosts(await res.json());
 			else setPosts([]);
 		});
-	});
+	}, []);
 
 	return <>
 		{posts === undefined && <h2>Loading posts...</h2>}

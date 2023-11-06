@@ -1,4 +1,5 @@
 import React from "react";
+import NavBarItemsComponent from "./NavBarItems";
 
 export default class SideBarComponent extends React.Component {
 	state: { opened: boolean };
@@ -13,9 +14,7 @@ export default class SideBarComponent extends React.Component {
 			<div className="sidebar-button" onClick={() => this.setState({ opened: true })}>≡</div>
 			<div className={"sidebar" + (this.state.opened ? "" : " hidden")}>
 				<div className="sidebar-close" onClick={() => this.setState({ opened: false })}>X</div>
-				<div className="button" style={{ marginTop: "9vh" }} onClick={() => window.location.href = "/"}>Home</div>
-				<div className="button" onClick={() => window.location.href = "/"}>About</div>
-				<div className="button" onClick={() => window.location.href = "/list"}>Posts</div>
+				<NavBarItemsComponent sidebar />
 			</div>
 		</>
 	}

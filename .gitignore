@@ -127,5 +127,5 @@ dist
 .pnp.*
 
 # custom
-public/*.bundle.js
+public/bundle
 data

@@ -28,6 +28,7 @@ export default class EditorComponent extends React.Component {
 
 	onPwKeyUp(e: React.KeyboardEvent) {
 		if (e.key == "Enter") {
+			e.preventDefault();
 			(e.target as HTMLInputElement).blur();
 			this.reload();
 		}
@@ -74,6 +75,24 @@ export default class EditorComponent extends React.Component {
 		}
 	}
 
+	renamePath() {
+		if (this.state.password) {
+			const name = prompt("New path name:");
+			if (!name) return;
+			fetch(`/api${window.location.pathname}/rename`, {
+				method: "POST",
+				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+				body: JSON.stringify({ name })
+			}).then(async res => {
+				if (res.ok) {
+					const paths = window.location.pathname.split("/");
+					paths[paths.length - 1] = await res.text();
+					window.location.pathname = paths.join("/");
+				}
+			});
+		}
+	}
+
 	newFile() {
 		if (this.state.password) {
 			const name = prompt("File name:");
@@ -110,10 +129,13 @@ export default class EditorComponent extends React.Component {
 	render() {
 		return <div className="flex" style={{ position: "fixed", top: 0, left: 0 }}>
 			<div style={{ width: "20%", padding: "1vw" }}>
-				<div className="flex"><input type="password" placeholder="Password..." style={{ width: "100%" }} value={this.state.password} onChange={(e) => this.setState({ password: e.target.value })} onKeyUp={e => this.onPwKeyUp(e)} /></div>
+				<div className="flex"><input form="upload" name="password" type="password" placeholder="Password..." style={{ width: "100%" }} value={this.state.password} onChange={(e) => this.setState({ password: e.target.value })} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} onKeyUp={e => this.onPwKeyUp(e)} /></div>
+				<div className="flex">
+					<div className="button flex-child" onClick={() => this.renamePath()}>Rename Path</div>
+				</div>
 				<h2>Files</h2>
 				<ul>
-					{this.state.files.map(f => <li key={f.name}><a href={f.type == "txt" ? "#" + f.name : f.name} target={f.type == "txt" ? undefined : "binary"}>{f.name}</a></li>)}
+					{this.state.files.map(f => <li key={f.name}><a href={f.type == "txt" ? "#" + f.name : (window.location.pathname.replace("edit", "p") + "/" + f.name)} target={f.type == "txt" ? undefined : "binary"}>{f.name}</a></li>)}
 				</ul>
 				<div className="flex">
 					<div className="button flex-child" onClick={() => this.newFile()}>New</div>
@@ -127,7 +149,7 @@ export default class EditorComponent extends React.Component {
 					<div className="button flex-child" onClick={() => this.delete()}>Delete</div>
 				</div>
 				<iframe name="useless" style={{ display: "none" }}></iframe>
-				<form action={`/api${window.location.pathname}/upload`} method="post" encType="multipart/form-data" className="flex" target="useless">
+				<form id="upload" action={`/api${window.location.pathname}/upload`} method="post" encType="multipart/form-data" className="flex" target="useless">
 					<div>
 					  <div className="flex"><input id="file" name="file" type="file" /></div>
 						<div className="flex" style={{ marginTop: "1vh" }}>

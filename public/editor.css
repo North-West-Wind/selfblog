@@ -9,40 +9,15 @@ body {
 }
 
 h2 {
-	margin-top: 0;
-}
-
-a {
-	text-decoration: underline;
-	color: burlywood;
-}
-
-a:hover {
-	filter: brightness(80%);
+	margin: 0;
 }
 
 input {
-	font-family: Kanit, Arial, Helvetica, sans-serif;
-	width: 100%;
 	padding: 1vh;
 	margin: .5vh;
-	background-color: #464646;
-	color: antiquewhite;
 	border-style: solid;
 	border-radius: 1vh;
 	font-size: 1.25vw;
-}
-
-.flex {
-	display: flex;
-}
-
-.flex.vcenter {
-	align-items: center;
-}
-
-.flex.hcenter {
-	justify-content: center;
 }
 
 .flex-child {
@@ -51,16 +26,11 @@ input {
 }
 
 .button {
-	background-color: blanchedalmond;
-	color: darkslateblue;
-	text-align: center;
-	border-radius: 1vh;
-	font-size: 1.25vw;
 	padding: 1vh;
 	margin-bottom: 1vh;
+	font-size: max(1.25vw, 2.5vh);
 }
 
-.button:hover {
-	filter: brightness(80%);
-	cursor: pointer;
+li {
+	font-size: max(1vw, 2vh);
 }
