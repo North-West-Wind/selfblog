@@ -1,9 +1,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import EditApp from "./EditApp";
+import EditorComponent from "../components/Editor";
 
 createRoot(document.getElementById("app")!).render(
   <React.StrictMode>
-    <EditApp />
+    <EditorComponent />
   </React.StrictMode>
 );

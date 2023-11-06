@@ -21,8 +21,19 @@ body {
 	.button {
 		background-color: #242424;
 		color: aquamarine;
-		color: white;
-		text-align: center;
+	}
+
+	.topbar, .topbar .button {
+		background-color: darkslateblue;
+		color: blanchedalmond;
+	}
+
+	.sidebar-button, .sidebar, .sidebar .button {
+		color: darkslateblue;
+	}
+
+	.sidebar, .sidebar .button {
+		background-color: blanchedalmond;
 	}
 }
 
@@ -31,12 +42,12 @@ h1 {
 }
 
 h2 {
-	font-size: 3vw;
+	font-size: max(3vw, 3vh);
 }
 
 h3 {
 	margin: 0;
-	font-size: 2.25vw;
+	font-size: max(2.25vw, 2vh);
 }
 
 iframe {
@@ -87,11 +98,64 @@ div.center {
 	color: darkslateblue;
 	text-align: center;
 	border-radius: 1vh;
-	font-size: 2vw;
+	font-size: max(2vw, 4vh);
 	padding: 2vh 3vh;
 }
 
-.button:hover {
+.button:hover, .sidebar-button:hover, .sidebar-close:hover {
 	filter: brightness(80%);
 	cursor: pointer;
+}
+
+.topbar, .sidebar {
+	position: fixed;
+	width: 100vw;
+	padding: 0;
+	margin: 0;
+	top: 0;
+	left: 0;
+}
+
+.topbar {
+	background-color: aquamarine;
+	color: #242424;
+}
+
+.sidebar-button {
+	position: fixed;
+	color: aquamarine;
+	font-size: 5vh;
+	top: 2vh;
+	left: 4vh;
+}
+
+.sidebar {
+	background-color: #242424;
+	color: aquamarine;
+	height: 100vh;
+	transition: transform ease .5s;
+}
+
+.sidebar.hidden {
+	transform: translateX(-100%);
+}
+
+.sidebar-close {
+	position: absolute;
+	color: aquamarine;
+	font-size: 5vh;
+	top: 2vh;
+	right: 4vh;
+}
+
+.topbar .button {
+	background-color: aquamarine;
+	color: #242424;
+	border-radius: 0;
+}
+
+.sidebar .button {
+	background-color: #242424;
+	color: aquamarine;
+	border-radius: 0;
 }

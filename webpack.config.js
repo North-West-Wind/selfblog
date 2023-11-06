@@ -5,7 +5,8 @@ module.exports = {
     main: "./client/index.tsx",
     list: "./client/pages/list.tsx",
     new: "./client/pages/new.tsx",
-    edit: "./client/pages/edit.tsx"
+    edit: "./client/pages/edit.tsx",
+    nav: "./client/pages/nav.tsx"
   },
   module: {
     rules: [

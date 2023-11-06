@@ -1,9 +1,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import ListApp from "./ListApp";
+import AllPostsComponent from "../components/AllPosts";
 
 createRoot(document.getElementById("app")!).render(
   <React.StrictMode>
-    <ListApp />
+    <AllPostsComponent />
   </React.StrictMode>
 );
