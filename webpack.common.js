@@ -7,7 +7,8 @@ module.exports = {
     new: "./client/pages/new.tsx",
     edit: "./client/pages/edit.tsx",
     nav: "./client/pages/nav.tsx",
-    "404": "./client/pages/404.tsx"
+    "404": "./client/pages/404.tsx",
+		delete: "./client/pages/delete.tsx"
   },
   module: {
     rules: [

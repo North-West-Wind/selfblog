@@ -153,6 +153,19 @@ app.delete("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 	res.sendStatus(200);
 });
 
+app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
+	if (!req.headers.authorization?.startsWith("Bearer ")) return res.sendStatus(400);
+	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	if (!fs.existsSync(dir)) return res.sendStatus(404);
+	fs.rmSync(dir, { recursive: true });
+	res.sendStatus(200);
+});
+
+app.get("/about", (_req, res) => {
+	res.redirect(process.env.ABOUT_REDIRECT || "/");
+});
+
 app.get("/list", (_req, res) => {
 	res.sendFile(path.join(__dirname, "../public", "list.html"));
 });
@@ -163,6 +176,10 @@ app.get("/new", (_req, res) => {
 
 app.get("/edit/:year/:month/:day/:post", (_req, res) => {
 	res.sendFile(path.join(__dirname, "../public", "edit.html"));
+});
+
+app.get("/delete/:year/:month/:day/:post", (_req, res) => {
+	res.sendFile(path.join(__dirname, "../public", "delete.html"));
 });
 
 app.get("/", (_req, res) => {
