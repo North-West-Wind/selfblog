@@ -22,7 +22,7 @@ app.get("/p/latest", (_req, res) => {
 	const day = fs.readdirSync(path.join("data", year, month)).sort().pop();
 	if (!day) return res.sendStatus(404);
 	const dir = path.join("data", year, month, day);
-	const post = fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => a.time - b.time).pop()?.name;
+	const post = fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => b.time - a.time).pop()?.name;
 	if (!post) return res.sendStatus(404);
 	res.redirect(`/p/${year}/${month}/${day}/${post}`);
 });
@@ -44,33 +44,36 @@ app.get("/api/list", (req, res) => {
 		for (const month of fs.readdirSync(path.join("data", year))) {
 			for (const day of fs.readdirSync(path.join("data", year, month))) {
 				const dir = path.join("data", year, month, day);
-				for (const post of fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => a.time - b.time).map(v => v.name)) {
+				for (const post of fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => b.time - a.time).map(v => v.name)) {
 					if (fs.existsSync(path.join(dir, post, "index.html"))) {
 						const html = fs.readFileSync(path.join(dir, post, "index.html"), { encoding: "utf8" });
 						const matched = html.match(/<title>(?<title>.*)<\/title>/);
 						let title = `${year}/${month}/${day}`;
 						if (matched?.groups?.title) title += ` - ${matched?.groups?.title}`;
 						posts.push({ title, url: `/p/${year}/${month}/${day}/${post}` });
-						if (limit && posts.length >= limit) return res.json(posts);
+						if (limit && posts.length >= limit) return res.json(posts.reverse());
 					}
 				}
 			}
 		}
 	}
-	res.json(posts);
+	res.json(posts.reverse());
 });
 
 app.post("/api/new", (req, res) => {
 	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.title || !req.body.date) return res.sendStatus(400);
 	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
 	const date = new Date(req.body.date);
-	const title = sanitize(req.body.title.split(" ").slice(0, 5).join(" ").toLowerCase(), { replacement: "-" });
+	const title = sanitize(req.body.title.split(" ").slice(0, 5).join("-").toLowerCase(), { replacement: "-" });
 	const dir = path.join("data", date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
 	fs.mkdirSync(dir, { recursive: true });
 	if (!fs.existsSync(path.join(dir, "index.html"))) {
 		fs.cpSync(path.join("public", "template.html"), path.join(dir, "index.html"));
 		const content = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
-		fs.writeFileSync(path.join(dir, "index.html"), content.replace("{date}", [date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0")].join("-")))
+		fs.writeFileSync(path.join(dir, "index.html"), content
+			.replace("{date}", [date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0")].join("-"))
+			.replace(/{title}/g, req.body.title)
+		);
 	}
 	res.json({ url: `/edit/${[date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title].join("/")}` });
 });
