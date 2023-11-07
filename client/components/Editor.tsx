@@ -1,5 +1,7 @@
 import { Editor } from "@monaco-editor/react";
 import React from "react";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default class EditorComponent extends React.Component {
 	state: { code: string, file: string, files: { name: string, type: "txt" | "bin" }[], password: string };
@@ -35,23 +37,52 @@ export default class EditorComponent extends React.Component {
 
 	save() {
 		if (this.state.password)
-			fetch(`/api${window.location.pathname}/${this.state.file}`, {
-				method: "POST",
-				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
-				body: JSON.stringify({ code: this.state.code })
+			toast.promise(new Promise<void>((resolve, reject) => {
+				fetch(`/api${window.location.pathname}/${this.state.file}`, {
+					method: "POST",
+					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+					body: JSON.stringify({ code: this.state.code })
+				}).then(res => {
+					if (res.ok) resolve();
+					else reject();
+				});
+			}), {
+				pending: "Saving...",
+				success: "File saved!",
+				error: "Failed to save file!"
 			});
 	}
 
 	reload() {
 		if (this.state.password) {
-			fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: `Bearer ${this.state.password}` } }).then(async res => {
-				if (res.ok) this.setState({ files: await res.json() });
-			});
+			toast.promise(new Promise<void>((resolve, reject) => {
+				fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: `Bearer ${this.state.password}` } }).then(async res => {
+					if (res.ok) {
+						this.setState({ files: await res.json() });
+						resolve();
+					} else reject();
+				});
+			}), {
+				pending: "Reloading...",
+				success: "File list reloaded!",
+				error: "Failed to reload file list!"
+			})
 			if (this.state.file) {
-				fetch(`/api${window.location.pathname}/${this.state.file}`, { headers: { Authorization: `Bearer ${this.state.password}` } }).then(async res => {
-					const text = await res.text();
-					if (res.ok) this.setState({ code: text });
-					else this.setState({ code: "" });
+				toast.promise(new Promise<void>((resolve, reject) => {
+					fetch(`/api${window.location.pathname}/${this.state.file}`, { headers: { Authorization: `Bearer ${this.state.password}` } }).then(async res => {
+						const text = await res.text();
+						if (res.ok) {
+							this.setState({ code: text });
+							resolve();
+						} else {
+							this.setState({ code: "" });
+							reject();
+						}
+					});
+				}), {
+					pending: "Reloading...",
+					success: "File content reloaded!",
+					error: "Failed to reload file content!"
 				});
 			}
 		}
@@ -61,15 +92,22 @@ export default class EditorComponent extends React.Component {
 		if (this.state.password) {
 			const name = prompt("Rename to:");
 			if (!name) return;
-			fetch(`/api${window.location.pathname}/${file}`, {
-				method: "PATCH",
-				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
-				body: JSON.stringify({ name })
-			}).then(res => {
-				if (res.ok) {
-					this.reload();
-					if (this.state.file == file) window.location.hash = name;
-				}
+			toast.promise(new Promise<void>((resolve, reject) => {
+				fetch(`/api${window.location.pathname}/${file}`, {
+					method: "PATCH",
+					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+					body: JSON.stringify({ name })
+				}).then(res => {
+					if (res.ok) {
+						this.reload();
+						if (this.state.file == file) window.location.hash = name;
+						resolve();
+					} else reject();
+				});
+			}), {
+				pending: "Renaming...",
+				success: "File renamed!",
+				error: "Failed to name file!"
 			});
 		}
 	}
@@ -96,15 +134,22 @@ export default class EditorComponent extends React.Component {
 		if (this.state.password) {
 			const name = prompt("File name:");
 			if (!name) return;
-			fetch(`/api${window.location.pathname}/new`, {
-				method: "POST",
-				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
-				body: JSON.stringify({ name })
-			}).then(res => {
-				if (res.ok) {
-					this.reload();
-					window.location.hash = name;
-				}
+			toast.promise(new Promise<void>((resolve, reject) => {
+				fetch(`/api${window.location.pathname}/new`, {
+					method: "POST",
+					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+					body: JSON.stringify({ name })
+				}).then(res => {
+					if (res.ok) {
+						this.reload();
+						window.location.hash = name;
+						resolve();
+					} else reject();
+				});
+			}), {
+				pending: "Creating...",
+				success: "File created!",
+				error: "Failed to create file!"
 			});
 		}
 	}
@@ -113,14 +158,21 @@ export default class EditorComponent extends React.Component {
 		if (this.state.password) {
 			const result = confirm("Are you sure you want to delete this file?");
 			if (!result) return;
-			fetch(`/api${window.location.pathname}/${file}`, {
-				method: "DELETE",
-				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" }
-			}).then(res => {
-				if (res.ok) {
-					this.reload();
-					if (this.state.file == file) window.location.hash = "";
-				}
+			toast.promise(new Promise<void>((resolve, reject) => {
+				fetch(`/api${window.location.pathname}/${file}`, {
+					method: "DELETE",
+					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" }
+				}).then(res => {
+					if (res.ok) {
+						this.reload();
+						if (this.state.file == file) window.location.hash = "";
+						resolve();
+					} else reject();
+				});
+			}), {
+				pending: "Deleting...",
+				success: "File deleted!",
+				error: "Failed to delete file!"
 			});
 		}
 	}
@@ -150,7 +202,7 @@ export default class EditorComponent extends React.Component {
 					<div className="button flex-child" onClick={() => this.reload()}>Reload</div>
 				</div>
 				<iframe name="useless" style={{ display: "none" }}></iframe>
-				<form id="upload" action={`/api${window.location.pathname}/upload`} method="post" encType="multipart/form-data" className="flex" target="useless">
+				<form id="upload" action={`/api${window.location.pathname}/upload`} method="post" encType="multipart/form-data" className="flex" target="useless" onSubmit={() => toast("File submitted! Try reloading.")}>
 					<div>
 					  <div className="flex"><input id="file" name="file" type="file" /></div>
 						<div className="flex" style={{ marginTop: "1vh" }}>
@@ -165,6 +217,14 @@ export default class EditorComponent extends React.Component {
 				onChange={(value) => this.setState({ code: value })}
 				height="100vh"
 				theme="vs-dark"
+			/>
+			<ToastContainer
+				position="bottom-right"
+				autoClose={3000}
+				closeOnClick
+				pauseOnFocusLoss
+				pauseOnHover
+				theme="dark"
 			/>
 		</div>
 	}
