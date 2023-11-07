@@ -1,8 +1,10 @@
-import moment from "moment";
 import React, { useRef, useState } from "react";
 
 const NewApp: React.FC = () => {
-	const [date, setDate] = useState(moment().format("YYYY-MM-DD"));
+	const [date, setDate] = useState((() => {
+		const d = new Date();
+		return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+	})());
 	const [createState, setCreateState] = useState(0);
 
 	const titleRef = useRef<HTMLInputElement>(null);
