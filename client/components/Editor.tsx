@@ -30,7 +30,6 @@ export default class EditorComponent extends React.Component {
 		if (e.key == "Enter") {
 			e.preventDefault();
 			(e.target as HTMLInputElement).blur();
-			this.reload();
 		}
 	}
 
@@ -58,18 +57,18 @@ export default class EditorComponent extends React.Component {
 		}
 	}
 
-	rename() {
+	rename(file: string) {
 		if (this.state.password) {
 			const name = prompt("Rename to:");
 			if (!name) return;
-			fetch(`/api${window.location.pathname}/${this.state.file}`, {
+			fetch(`/api${window.location.pathname}/${file}`, {
 				method: "PATCH",
 				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
 				body: JSON.stringify({ name })
 			}).then(res => {
 				if (res.ok) {
 					this.reload();
-					window.location.hash = name;
+					if (this.state.file == file) window.location.hash = name;
 				}
 			});
 		}
@@ -110,17 +109,17 @@ export default class EditorComponent extends React.Component {
 		}
 	}
 
-	delete() {
+	delete(file: string) {
 		if (this.state.password) {
 			const result = confirm("Are you sure you want to delete this file?");
 			if (!result) return;
-			fetch(`/api${window.location.pathname}/${this.state.file}`, {
+			fetch(`/api${window.location.pathname}/${file}`, {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" }
 			}).then(res => {
 				if (res.ok) {
 					this.reload();
-					window.location.hash = "";
+					if (this.state.file == file) window.location.hash = "";
 				}
 			});
 		}
@@ -129,13 +128,19 @@ export default class EditorComponent extends React.Component {
 	render() {
 		return <div className="flex" style={{ position: "fixed", top: 0, left: 0 }}>
 			<div style={{ width: "20%", padding: "1vw" }}>
-				<div className="flex"><input form="upload" name="password" type="password" placeholder="Password..." style={{ width: "100%" }} value={this.state.password} onChange={(e) => this.setState({ password: e.target.value })} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} onKeyUp={e => this.onPwKeyUp(e)} /></div>
+				<div className="flex"><input form="upload" name="password" type="password" placeholder="Password..." style={{ width: "100%" }} value={this.state.password} onChange={(e) => this.setState({ password: e.target.value })} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} onKeyUp={e => this.onPwKeyUp(e)} onBlur={() => this.reload()} /></div>
 				<div className="flex">
 					<div className="button flex-child" onClick={() => this.renamePath()}>Rename Path</div>
 				</div>
 				<h2>Files</h2>
 				<ul>
-					{this.state.files.map(f => <li key={f.name}><a href={f.type == "txt" ? "#" + f.name : (window.location.pathname.replace("edit", "p") + "/" + f.name)} target={f.type == "txt" ? undefined : "binary"}>{f.name}</a></li>)}
+					{this.state.files.map(f => <li key={f.name} className="flex vcenter">
+						<a href={f.type == "txt" ? "#" + f.name : (window.location.pathname.replace("edit", "p") + "/" + f.name)} target={f.type == "txt" ? undefined : "binary"}>{f.name}</a>
+						<div className="flex" style={{ marginLeft: "auto", order: 2 }}>
+							<div className="file-button" onClick={() => this.rename(f.name)} title="Rename">R</div>
+							<div className="file-button" style={{ backgroundColor: "#ff0000" }} onClick={() => this.delete(f.name)} title="Delete">X</div>
+						</div>
+					</li>)}
 				</ul>
 				<div className="flex">
 					<div className="button flex-child" onClick={() => this.newFile()}>New</div>
@@ -143,10 +148,6 @@ export default class EditorComponent extends React.Component {
 				<div className="flex">
 					<div className="button flex-child" onClick={() => this.save()}>Save</div>
 					<div className="button flex-child" onClick={() => this.reload()}>Reload</div>
-				</div>
-				<div className="flex">
-					<div className="button flex-child" onClick={() => this.rename()}>Rename</div>
-					<div className="button flex-child" onClick={() => this.delete()}>Delete</div>
 				</div>
 				<iframe name="useless" style={{ display: "none" }}></iframe>
 				<form id="upload" action={`/api${window.location.pathname}/upload`} method="post" encType="multipart/form-data" className="flex" target="useless">

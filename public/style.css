@@ -72,6 +72,10 @@ input {
 	font-size: 2vw;
 }
 
+li {
+	font-size: max(1vw, 2vh);
+}
+
 div.center {
 	margin: auto;
 }

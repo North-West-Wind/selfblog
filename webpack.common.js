@@ -22,7 +22,6 @@ module.exports = {
       }
     ],
   },
-  mode: "development",
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
@@ -30,8 +29,4 @@ module.exports = {
     filename: "[name].bundle.js",
     path: path.resolve(__dirname, "public/bundle"),
   },
-  devtool: 'cheap-module-source-map',
-  optimization: {
-    minimize: false
-  }
 };

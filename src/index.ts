@@ -3,6 +3,7 @@ import express from "express";
 import fileUpload, { UploadedFile } from "express-fileupload";
 import * as fs from "fs";
 import isTextPath from "is-text-path";
+import { AddressInfo } from "net";
 import * as path from "path";
 import sanitize from "sanitize-filename";
 
@@ -21,7 +22,7 @@ app.get("/p/latest", (_req, res) => {
 	const day = fs.readdirSync(path.join("data", year, month)).sort().pop();
 	if (!day) return res.sendStatus(404);
 	const dir = path.join("data", year, month, day);
-	const post = fs.readdirSync(dir).filter(v => !v.startsWith(".")).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => a.time - b.time).pop()?.name;
+	const post = fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => a.time - b.time).pop()?.name;
 	if (!post) return res.sendStatus(404);
 	res.redirect(`/p/${year}/${month}/${day}/${post}`);
 });
@@ -43,7 +44,7 @@ app.get("/api/list", (req, res) => {
 		for (const month of fs.readdirSync(path.join("data", year))) {
 			for (const day of fs.readdirSync(path.join("data", year, month))) {
 				const dir = path.join("data", year, month, day);
-				for (const post of fs.readdirSync(dir).filter(v => !v.startsWith(".")).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => a.time - b.time).map(v => v.name)) {
+				for (const post of fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => a.time - b.time).map(v => v.name)) {
 					if (fs.existsSync(path.join(dir, post, "index.html"))) {
 						const html = fs.readFileSync(path.join(dir, post, "index.html"), { encoding: "utf8" });
 						const matched = html.match(/<title>(?<title>.*)<\/title>/);
@@ -66,7 +67,11 @@ app.post("/api/new", (req, res) => {
 	const title = sanitize(req.body.title.split(" ").slice(0, 5).join(" ").toLowerCase(), { replacement: "-" });
 	const dir = path.join("data", date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
 	fs.mkdirSync(dir, { recursive: true });
-	if (!fs.existsSync(path.join(dir, "index.html"))) fs.cpSync(path.join("public", "template.html"), path.join(dir, "index.html"));
+	if (!fs.existsSync(path.join(dir, "index.html"))) {
+		fs.cpSync(path.join("public", "template.html"), path.join(dir, "index.html"));
+		const content = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
+		fs.writeFileSync(path.join(dir, "index.html"), content.replace("{date}", [date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0")].join("-")))
+	}
 	res.json({ url: `/edit/${[date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title].join("/")}` });
 });
 
@@ -164,8 +169,6 @@ app.get("/", (_req, res) => {
 	res.sendFile(path.join(__dirname, "../public", "index.html"));
 });
 
-const PORT = 3000;
-
-app.listen(PORT, () => {
-	console.log(`App listening on port ${PORT}`)
+const server = app.listen(process.env.PORT || 3000, () => {
+	console.log(`App listening on port ${(<AddressInfo>server.address()).port}`);
 });
