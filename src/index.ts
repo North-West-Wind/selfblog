@@ -40,9 +40,9 @@ app.get("/p/:year/:month/:day/:post/:file", (req, res) => {
 app.get("/api/list", (req, res) => {
 	const limit = parseInt(<string> req.query.limit) || 0;
 	const posts: { title: string, url: string }[] = [];
-	for (const year of fs.readdirSync("data")) {
-		for (const month of fs.readdirSync(path.join("data", year))) {
-			for (const day of fs.readdirSync(path.join("data", year, month))) {
+	for (const year of fs.readdirSync("data").map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString())) {
+		for (const month of fs.readdirSync(path.join("data", year)).map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString())) {
+			for (const day of fs.readdirSync(path.join("data", year, month)).map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString())) {
 				const dir = path.join("data", year, month, day);
 				for (const post of fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => b.time - a.time).map(v => v.name)) {
 					if (fs.existsSync(path.join(dir, post, "index.html"))) {
