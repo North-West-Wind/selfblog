@@ -30,15 +30,18 @@ body {
 h1 {
 	font-size: 7.5vw;
 	line-height: 100%;
+	filter: brightness(150%);
 }
 
 h2 {
 	font-size: max(3vw, 3vh);
+	filter: brightness(125%);
 }
 
 h3 {
 	margin: 0;
 	font-size: max(2.25vw, 2vh);
+	filter: brightness(110%);
 }
 
 p {
