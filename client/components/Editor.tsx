@@ -215,6 +215,7 @@ export default class EditorComponent extends React.Component {
 				value={this.state.code}
 				language={this.state.file?.split(".").pop() || "txt"}
 				onChange={(value) => this.setState({ code: value })}
+				width="80%"
 				height="100vh"
 				theme="vs-dark"
 			/>
