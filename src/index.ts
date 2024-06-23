@@ -43,8 +43,8 @@ app.get("/api/list", (req, res) => {
 	const feed = generateFeed("", limit);
 	res.json(feed.items.map(item => {
 		const year = item.date.getFullYear();
-		const month = item.date.getMonth() + 1;
-		const day = item.date.getDate();
+		const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
+		const day = item.date.getDate().toString().padStart(2, "0");
 		return { title: `${year}/${month}/${day} - ${item.title}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
 	}).reverse());
 });
