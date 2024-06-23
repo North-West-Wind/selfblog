@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 export function generateFeed(baseUrl: string, limit: number) {
+	if (process.env.BASE_URL) baseUrl = process.env.BASE_URL;
 	const year = Math.max(...fs.readdirSync("data").map(v => parseInt(v)));
 	const month = Math.max(...fs.readdirSync(path.join("data", year.toString())).map(v => parseInt(v)));
 	const day = Math.max(...fs.readdirSync(path.join("data", year.toString(), month.toString().padStart(2, "0"))).map(v => parseInt(v)));
