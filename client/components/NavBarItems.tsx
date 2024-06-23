@@ -13,6 +13,9 @@ const NavBarItemsComponent: React.FC<Attributes> = (props: Attributes) => {
 		<div className="button">
 			<a href="/list">Posts</a>
 		</div>
+		<div className="button">
+			<a href="/rss">RSS</a>
+		</div>
 	</>
 }
 

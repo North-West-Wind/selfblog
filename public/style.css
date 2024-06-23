@@ -22,7 +22,7 @@
 
 body {
 	font-family: Kanit, Arial, Helvetica, sans-serif;
-	padding: 5vh 10vw;
+	padding: 6vmin 8vmax;
 	background-color: var(--bg);
 	color: var(--fg);
 }
@@ -40,12 +40,12 @@ h2 {
 
 h3 {
 	margin: 0;
-	font-size: max(2.25vw, 2vh);
+	font-size: max(2.25vw, 2.5vh);
 	filter: brightness(110%);
 }
 
 p {
-	font-size: max(1.5vw, 1.5vh);
+	font-size: max(1.5vw, 2vh);
 }
 
 iframe {
@@ -170,4 +170,8 @@ div.center {
 	background-color: var(--bg);
 	color: var(--fg);
 	border-radius: 0;
+}
+
+.sidebar .button a {
+	color: var(--fg);
 }

@@ -6,6 +6,7 @@ import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
 import * as path from "path";
 import sanitize from "sanitize-filename";
+import { generateFeed } from "./util";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
 
@@ -39,25 +40,13 @@ app.get("/p/:year/:month/:day/:post/:file", (req, res) => {
 
 app.get("/api/list", (req, res) => {
 	const limit = parseInt(<string> req.query.limit) || 0;
-	const posts: { title: string, url: string }[] = [];
-	for (const year of fs.readdirSync("data").map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString())) {
-		for (const month of fs.readdirSync(path.join("data", year)).map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString().padStart(2, "0"))) {
-			for (const day of fs.readdirSync(path.join("data", year, month)).map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString().padStart(2, "0"))) {
-				const dir = path.join("data", year, month, day);
-				for (const post of fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => b.time - a.time).map(v => v.name)) {
-					if (fs.existsSync(path.join(dir, post, "index.html"))) {
-						const html = fs.readFileSync(path.join(dir, post, "index.html"), { encoding: "utf8" });
-						const matched = html.match(/<title>(?<title>.*)<\/title>/);
-						let title = `${year}/${month}/${day}`;
-						if (matched?.groups?.title) title += ` - ${matched?.groups?.title}`;
-						posts.push({ title, url: `/p/${year}/${month}/${day}/${post}` });
-						if (limit && posts.length >= limit) return res.json(posts.reverse());
-					}
-				}
-			}
-		}
-	}
-	res.json(posts.reverse());
+	const feed = generateFeed("", limit);
+	res.json(feed.items.map(item => {
+		const year = item.date.getFullYear();
+		const month = item.date.getMonth() + 1;
+		const day = item.date.getDate();
+		return { title: `${year}/${month}/${day} - ${item.title}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
+	}).reverse());
 });
 
 app.post("/api/new", (req, res) => {
@@ -163,6 +152,12 @@ app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
 	if (!fs.existsSync(dir)) return res.sendStatus(404);
 	fs.rmSync(dir, { recursive: true });
 	res.sendStatus(200);
+});
+
+app.get("/rss", (req, res) => {
+	console.log(`${req.protocol}://${req.headers.host}`);
+	res.setHeader("Content-Disposition", "attachment; filename=\"northwestblog.rss\"");
+	res.send(generateFeed(`${req.protocol}://${req.headers.host}`, parseInt(<string> req.query.limit) || 0).rss2());
 });
 
 app.get("/about", (_req, res) => {
