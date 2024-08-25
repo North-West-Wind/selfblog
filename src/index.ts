@@ -5,7 +5,6 @@ import * as fs from "fs";
 import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
 import * as path from "path";
-import sanitize from "sanitize-filename";
 import { generateFeed } from "./util";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
@@ -48,7 +47,7 @@ app.post("/api/new", (req, res) => {
 	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.title || !req.body.date) return res.sendStatus(400);
 	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
 	const date = new Date(req.body.date);
-	const title = sanitize(req.body.title.split(" ").slice(0, 5).join("-").toLowerCase(), { replacement: "-" });
+	const title = (req.body.title as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9]/gi, "").toLowerCase();
 	const dir = path.join("data", date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
 	fs.mkdirSync(dir, { recursive: true });
 	if (!fs.existsSync(path.join(dir, "index.html"))) {
@@ -91,7 +90,7 @@ app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
 	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
 	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) return res.sendStatus(404);
-	const title = sanitize(req.body.name.split(" ").slice(0, 5).join(" ").toLowerCase(), { replacement: "-" });
+	const title = req.body.name.split(" ").slice(0, 5).join(" ").replace(/[^a-z0-9]/gi, "").toLowerCase();
 	fs.renameSync(dir, path.join("data", req.params.year, req.params.month, req.params.day, title));
 	res.send(title);
 });
@@ -128,7 +127,6 @@ app.patch("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
 	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
 	if (!fs.existsSync(file)) return res.sendStatus(404);
-	if (sanitize(req.body.name) !== req.body.name) return res.sendStatus(400);
 	fs.renameSync(file, path.join(__dirname , "../data", req.params.year, req.params.month, req.params.day, req.params.post, req.body.name));
 	return res.sendStatus(200);
 });
