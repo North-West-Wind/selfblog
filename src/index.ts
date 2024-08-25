@@ -16,16 +16,11 @@ app.use(express.json());
 app.use(fileUpload());
 
 app.get("/p/latest", (_req, res) => {
-	const year = fs.readdirSync("data").sort().pop();
-	if (!year) return res.sendStatus(404);
-	const month = fs.readdirSync(path.join("data", year)).sort().pop();
-	if (!month) return res.sendStatus(404);
-	const day = fs.readdirSync(path.join("data", year, month)).sort().pop();
-	if (!day) return res.sendStatus(404);
-	const dir = path.join("data", year, month, day);
-	const post = fs.readdirSync(dir).map(v => ({ name:v, time:fs.statSync(path.join(dir, v)).mtime.getTime() })).sort((a, b) => b.time - a.time).pop()?.name;
-	if (!post) return res.sendStatus(404);
-	res.redirect(`/p/${year}/${month}/${day}/${post}`);
+	const item = generateFeed("", 1).items[0];
+	const year = item.date.getFullYear();
+	const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
+	const day = item.date.getDate().toString().padStart(2, "0");
+	res.redirect(`/p/${year}/${month}/${day}/${item.id?.split("/").pop()}`);
 });
 
 app.get("/p/:year/:month/:day/:post", (req, res) => {
@@ -46,7 +41,7 @@ app.get("/api/list", (req, res) => {
 		const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
 		const day = item.date.getDate().toString().padStart(2, "0");
 		return { title: `${year}/${month}/${day} - ${item.title}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
-	}).reverse());
+	}));
 });
 
 app.post("/api/new", (req, res) => {
@@ -63,6 +58,8 @@ app.post("/api/new", (req, res) => {
 			.replace("{date}", [date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0")].join("-"))
 			.replace(/{title}/g, req.body.title)
 		);
+		// hidden by default
+		fs.writeFileSync(path.join(dir, ".hidden"), "");
 	}
 	res.json({ url: `/edit/${[date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title].join("/")}` });
 });
