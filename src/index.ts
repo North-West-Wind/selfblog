@@ -45,7 +45,7 @@ app.post("/api/new", (req, res) => {
 	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.title || !req.body.date) return res.sendStatus(400);
 	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
 	const date = new Date(req.body.date);
-	const title = (req.body.title as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9]/gi, "").toLowerCase();
+	const title = (req.body.title as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
 	const dir = path.join("data", date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
 	fs.mkdirSync(dir, { recursive: true });
 	if (!fs.existsSync(path.join(dir, "index.html"))) {
