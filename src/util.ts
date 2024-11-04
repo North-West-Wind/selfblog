@@ -65,3 +65,11 @@ export function generatePostArray(limit = 0) {
 		return { title: `${year}/${month}/${day} - ${item.title}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
 	});
 }
+
+export function generateLatest() {
+	const item = generateFeed("", 1).items[0];
+	const year = item.date.getFullYear();
+	const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
+	const day = item.date.getDate().toString().padStart(2, "0");
+	return `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}`;
+}

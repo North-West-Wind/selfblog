@@ -5,10 +5,10 @@ import * as fs from "fs";
 import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
 import * as path from "path";
-import { generateFeed, generatePostArray } from "./util";
+import { generateFeed, generateLatest, generatePostArray } from "./util";
 import compression from "compression";
 import sirv from "sirv";
-import { renderListPage } from "./ssr";
+import { renderIndexPage, renderListPage } from "./ssr";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
 
@@ -179,7 +179,7 @@ app.get("/list", (_req, res) => {
 });
 
 app.get("/", (_req, res) => {
-	res.sendFile(path.join(__dirname, "../public", "index.html"));
+	res.send(renderIndexPage(HTML.index, generateLatest(), generatePostArray(10)));
 });
 
 const server = app.listen(process.env.PORT || 3000, () => {
