@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from "react";
 
-const AllPostsComponent: React.FC = () => {
-	const [posts, setPosts] = useState<{ title: string, url: string }[] | undefined>(undefined);
+type Post = {
+	title: string,
+	url: string,
+}
+
+const AllPostsComponent = (prop: { posts?: Post[] }) => {
+	if (!prop.posts) {
+		// read from body data
+		const data = document.body.getAttribute("data");
+		if (data)
+			try {
+				prop.posts = JSON.parse(data);
+			} catch (err) {}
+	}
+	const [posts, setPosts] = useState<Post[] | undefined>(prop.posts);
 	useEffect(() => {
 		fetch("/api/list").then(async res => {
 			if (res.ok) setPosts(await res.json());

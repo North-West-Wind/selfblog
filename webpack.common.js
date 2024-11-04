@@ -2,13 +2,13 @@ const path = require("path");
 
 module.exports = {
   entry: {
-    main: "./client/index.tsx",
-    list: "./client/pages/list.tsx",
-    new: "./client/pages/new.tsx",
-    edit: "./client/pages/edit.tsx",
-    nav: "./client/pages/nav.tsx",
-    "404": "./client/pages/404.tsx",
-		delete: "./client/pages/delete.tsx"
+    main: "./src/client/index.tsx",
+    list: "./src/client/pages/list.tsx",
+    new: "./src/client/pages/new.tsx",
+    edit: "./src/client/pages/edit.tsx",
+    nav: "./src/client/pages/nav.tsx",
+    "404": "./src/client/pages/404.tsx",
+		delete: "./src/client/pages/delete.tsx"
   },
   module: {
     rules: [

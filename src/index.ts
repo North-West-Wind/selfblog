@@ -5,9 +5,10 @@ import * as fs from "fs";
 import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
 import * as path from "path";
-import { generateFeed } from "./util";
+import { generateFeed, generatePostArray } from "./util";
 import compression from "compression";
 import sirv from "sirv";
+import { renderListPage } from "./ssr";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
 
@@ -37,13 +38,7 @@ app.get("/p/:year/:month/:day/:post/:file", (req, res) => {
 
 app.get("/api/list", (req, res) => {
 	const limit = parseInt(<string> req.query.limit) || 0;
-	const feed = generateFeed("", limit);
-	res.json(feed.items.map(item => {
-		const year = item.date.getFullYear();
-		const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
-		const day = item.date.getDate().toString().padStart(2, "0");
-		return { title: `${year}/${month}/${day} - ${item.title}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
-	}));
+	res.json(generatePostArray(limit));
 });
 
 app.post("/api/new", (req, res) => {
@@ -162,10 +157,6 @@ app.get("/about", (_req, res) => {
 	res.redirect(process.env.ABOUT_REDIRECT || "/");
 });
 
-app.get("/list", (_req, res) => {
-	res.sendFile(path.join(__dirname, "../public", "list.html"));
-});
-
 app.get("/new", (_req, res) => {
 	res.sendFile(path.join(__dirname, "../public", "new.html"));
 });
@@ -176,6 +167,15 @@ app.get("/edit/:year/:month/:day/:post", (_req, res) => {
 
 app.get("/delete/:year/:month/:day/:post", (_req, res) => {
 	res.sendFile(path.join(__dirname, "../public", "delete.html"));
+});
+
+const HTML = {
+	list: fs.readFileSync("./public/list.html", "utf8"),
+	index: fs.readFileSync("./public/index.html", "utf8"),
+}
+
+app.get("/list", (_req, res) => {
+	res.send(renderListPage(HTML.list, generatePostArray()));
 });
 
 app.get("/", (_req, res) => {
