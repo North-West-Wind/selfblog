@@ -34,7 +34,7 @@ const NewApp: React.FC = () => {
   return <div style={{ margin: "auto" }}>
 		<h2>Create a new post</h2>
 		<div className="flex"><input type="text" id="title" placeholder="Title..." ref={titleRef} /></div>
-		<div className="flex"><input type="date" id="date" onChange={(e) => setDate(e.target.value)} value={date} ref={dateRef} /></div>
+		<div className="flex"><input type="date" id="date" onChange={(e) => setDate((e.target as HTMLInputElement).value)} value={date} ref={dateRef} /></div>
 		<div className="flex"><input type="password" id="pw" placeholder="Password..." ref={pwRef} /></div>
 		<div className="flex hcenter">
 			{createState == 0 && <div className="button" style={{ width: "min-content", marginTop: "2vh" }} onClick={() => create()}>Create</div>}

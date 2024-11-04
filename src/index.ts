@@ -6,11 +6,14 @@ import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
 import * as path from "path";
 import { generateFeed } from "./util";
+import compression from "compression";
+import sirv from "sirv";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
 
 const app = express();
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(compression());
+app.use("/", sirv("./public"));
 app.use(express.json());
 app.use(fileUpload());
 

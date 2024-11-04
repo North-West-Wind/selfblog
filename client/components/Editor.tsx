@@ -28,7 +28,7 @@ export default class EditorComponent extends React.Component {
 		});
 	}
 
-	onPwKeyUp(e: React.KeyboardEvent) {
+	onPwKeyUp(e: React.KeyboardEvent<HTMLInputElement>) {
 		if (e.key == "Enter") {
 			e.preventDefault();
 			(e.target as HTMLInputElement).blur();
@@ -180,7 +180,7 @@ export default class EditorComponent extends React.Component {
 	render() {
 		return <div className="flex" style={{ position: "fixed", top: 0, left: 0 }}>
 			<div style={{ width: "20%", padding: "1vw" }}>
-				<div className="flex"><input form="upload" name="password" type="password" placeholder="Password..." style={{ width: "100%" }} value={this.state.password} onChange={(e) => this.setState({ password: e.target.value })} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} onKeyUp={e => this.onPwKeyUp(e)} onBlur={() => this.reload()} /></div>
+				<div className="flex"><input form="upload" name="password" type="password" placeholder="Password..." style={{ width: "100%" }} value={this.state.password} onChange={(e) => this.setState({ password: (e.target as HTMLInputElement).value })} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} onKeyUp={e => this.onPwKeyUp(e)} onBlur={() => this.reload()} /></div>
 				<div className="flex">
 					<div className="button flex-child" onClick={() => this.renamePath()}>Rename Path</div>
 				</div>
