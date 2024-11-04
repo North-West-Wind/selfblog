@@ -1,9 +1,4 @@
-import React from "react";
-import { createRoot } from 'react-dom/client';
 import App from "./App";
+import { hydrate } from "preact";
 
-createRoot(document.getElementById("app")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+hydrate(<App />, document.getElementById("app")!);

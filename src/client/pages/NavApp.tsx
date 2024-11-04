@@ -1,17 +1,12 @@
-import React, { useEffect, useState } from "react";
 import TopBarComponent from "../components/TopBar";
 import SideBarComponent from "../components/SideBar";
+import useVertical from "../hooks/useVertical";
 
-const NavApp: React.FC = () => {
+const NavApp = () => {
 	// If we are inside iframe, hide navigation menu
-	if (window.frameElement) return <></>;
+	if (globalThis.window !== undefined && window.frameElement) return <></>;
 
-	const [vertical, setVertical] = useState(window.innerWidth < window.innerHeight);
-	useEffect(() => {
-		window.addEventListener("resize", () => {
-			setVertical(window.innerWidth < window.innerHeight);
-		});
-	}, []);
+	const vertical = useVertical();
 
 	return <>
 		{!vertical && <TopBarComponent />}

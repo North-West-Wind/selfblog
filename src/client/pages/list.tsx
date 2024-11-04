@@ -1,9 +1,4 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
 import AllPostsComponent from "../components/AllPosts";
+import { hydrate } from "preact";
 
-createRoot(document.getElementById("app")!).render(
-  <React.StrictMode>
-    <AllPostsComponent />
-  </React.StrictMode>
-);
+hydrate(<AllPostsComponent />, document.getElementById("app")!);

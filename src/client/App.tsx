@@ -1,14 +1,21 @@
-import React, { useEffect, useState } from "react";
+import { Post } from "src/types";
 import LatestPostComponent from "./components/LatestPost";
 import MorePostsComponent from "./components/MorePosts";
+import useVertical from "./hooks/useVertical";
 
-const App: React.FC = () => {
-	const [vertical, setVertical] = useState(window.innerWidth < window.innerHeight);
-	useEffect(() => {
-		window.addEventListener("resize", () => {
-			setVertical(window.innerWidth < window.innerHeight);
-		});
-	});
+const App = (props: { latest?: string, posts?: Post[] }) => {
+	if (!props.latest || !props.posts) {
+		// read from body data
+		const data = document.body.getAttribute("data");
+		if (data)
+			try {
+				const json = JSON.parse(atob(data));
+				props.latest = json.latest;
+				props.posts = json.posts;
+			} catch (err) {}
+	}
+
+	const vertical = useVertical();
 
   return <>
 		<div className="flex" style={{ marginTop: "calc(max(2vw, 4vh) + 4vh)" }}>
@@ -25,8 +32,8 @@ const App: React.FC = () => {
 			<img src="/assets/icon.gif" style={{ borderRadius: "50%", aspectRatio: "1/1", width: "50vw", height: "50vw" }} />
 		</div>}
 
-		<LatestPostComponent />
-		<MorePostsComponent />
+		<LatestPostComponent latest={props.latest} />
+		<MorePostsComponent posts={props.posts} />
 	</>;
 };
 

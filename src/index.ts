@@ -14,7 +14,7 @@ if (!fs.existsSync("data")) fs.mkdirSync("data");
 
 const app = express();
 app.use(compression());
-app.use("/", sirv("./public"));
+app.use("/", sirv("./public", { extensions: [] }));
 app.use(express.json());
 app.use(fileUpload());
 

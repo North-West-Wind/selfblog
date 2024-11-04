@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "preact/hooks";
 
-const LatestPostComponent: React.FC = () => {
-	const [latestPost, setLatestPost] = useState<string | null | undefined>(undefined);
+const LatestPostComponent = (props: { latest?: string }) => {
+	const [latestPost, setLatestPost] = useState<string | null | undefined>(props.latest);
 	useEffect(() => {
 		fetch("/p/latest").then(res => {
 			if (!res.ok) setLatestPost(null);

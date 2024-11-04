@@ -1,20 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "preact/hooks";
+import { Post } from "src/types";
 
-type Post = {
-	title: string,
-	url: string,
-}
-
-const AllPostsComponent = (prop: { posts?: Post[] }) => {
-	if (!prop.posts) {
+const AllPostsComponent = (props: { posts?: Post[] }) => {
+	if (!props.posts) {
 		// read from body data
 		const data = document.body.getAttribute("data");
 		if (data)
 			try {
-				prop.posts = JSON.parse(data);
+				props.posts = JSON.parse(atob(data));
 			} catch (err) {}
 	}
-	const [posts, setPosts] = useState<Post[] | undefined>(prop.posts);
+	const [posts, setPosts] = useState<Post[] | undefined>(props.posts);
 	useEffect(() => {
 		fetch("/api/list").then(async res => {
 			if (res.ok) setPosts(await res.json());

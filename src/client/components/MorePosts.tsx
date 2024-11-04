@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "preact/hooks";
+import { Post } from "src/types";
 
-const MorePostsComponent: React.FC = () => {
-	const [posts, setPosts] = useState<{ title: string, url: string }[] | undefined>(undefined);
+const MorePostsComponent = (props: { posts?: Post[] }) => {
+	const [posts, setPosts] = useState<{ title: string, url: string }[] | undefined>(props.posts);
 	useEffect(() => {
 		fetch("/api/list?limit=10").then(async res => {
 			if (res.ok) setPosts(await res.json());

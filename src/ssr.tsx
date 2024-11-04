@@ -1,40 +1,43 @@
 import renderToString from "preact-render-to-string";
 import NavApp from "./client/pages/NavApp";
-import React from "preact/compat";
 import AllPostsComponent from "./client/components/AllPosts";
 import App from "./client/App";
-
-type Post = {
-	title: string,
-	url: string
-}
+import { Post } from "./types";
 
 function isSamePosts(a: Post[], b: Post[]) {
 	return a.length == b.length && a.every((post, ii) => post.title == b[ii].title && post.url == b[ii].url);
 }
 
 let navBarCache = "", listCache = "", indexCache = "";
-let cachedPosts: Post[] = [];
+let cachedListPosts: Post[] = [];
+let cachedLatest = "";
+let cachedIndexPosts: Post[] = [];
 
 function renderNavBarToString() {
 	navBarCache = renderToString(<NavApp />);
 }
 
 export function renderListPage(html: string, posts: Post[]) {
-	console.log("ssr for /list");
 	if (!navBarCache) renderNavBarToString();
-	if (listCache && isSamePosts(cachedPosts, posts)) return listCache;
-	console.log("cache is invalid. re-rendering");
-	cachedPosts = posts;
-	html = html.replace("{server-data}", JSON.stringify(posts));
+	if (listCache && isSamePosts(cachedListPosts, posts)) return listCache;
+	cachedListPosts = posts;
+	html = html.replace("{server-data}", btoa(JSON.stringify(posts)));
 	html = html.replace("<!--app-nav-->", navBarCache);
 	html = html.replace("<!--app-html-->", renderToString(<AllPostsComponent posts={posts} />));
 	return listCache = html;
 }
 
-export function renderIndexPage(html: string) {
+function validateIndexCache(latest: string, posts: Post[]) {
+	return cachedLatest == latest && isSamePosts(cachedIndexPosts, posts);
+}
+
+export function renderIndexPage(html: string, latest: string, posts: Post[]) {
 	if (!navBarCache) renderNavBarToString();
+	if (indexCache && validateIndexCache(latest, posts)) return indexCache;
+	cachedLatest = latest;
+	cachedIndexPosts = posts;
+	html = html.replace("{server-data}", btoa(JSON.stringify({ latest, posts })));
 	html = html.replace("<!--app-nav-->", navBarCache);
-	html = html.replace("<!--app-html-->", renderToString(<App />));
-	return html;
+	html = html.replace("<!--app-html-->", renderToString(<App latest={latest} posts={posts} />));
+	return indexCache = html;
 }
