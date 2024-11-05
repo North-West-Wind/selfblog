@@ -60,7 +60,7 @@ for (let ii = 0; ii < body.length; ii++) {
 if (stack.length) console.warn("Stack is not empty after formatting");
 
 // markdown links
-newBody = newBody.replace(/\[(.*)\](\(.*\))/g, `<a href="$2" target="$1">$1</a>`);
+newBody = newBody.replace(/\[(.*)\]\((.*)\)/g, `<a href="$2" target="$1">$1</a>`);
 
 document.body.innerHTML = newBody;
 
