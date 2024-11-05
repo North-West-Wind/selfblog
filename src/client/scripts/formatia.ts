@@ -1,11 +1,13 @@
 const ROTATIONS: number[] = Array(3).fill(() => Math.round(Math.random() * 180) + 90).map(x => x());
 
 // add styles
-const style = document.createElement('style');
-for (let ii = 0; ii < ROTATIONS.length; ii++) {
-	style.innerHTML += `span.colored-${ii} { filter: hue-rotate(${ROTATIONS[ii]}deg) }`
+{
+	const style = document.createElement('style');
+	for (let ii = 0; ii < ROTATIONS.length; ii++) {
+		style.innerHTML += `span.colored-${ii} { filter: hue-rotate(${ROTATIONS[ii]}deg) }`
+	}
+	document.getElementsByTagName('head')[0].appendChild(style);
 }
-document.getElementsByTagName('head')[0].appendChild(style);
 
 const SURROUNDABLES = {
 	'"': [`<span class="colored-0">"`, "\"</span>"],
@@ -61,3 +63,8 @@ if (stack.length) console.warn("Stack is not empty after formatting");
 newBody = newBody.replace(/\[(.*)\](\(.*\))/g, `<a href="$2" target="$1">$1</a>`);
 
 document.body.innerHTML = newBody;
+
+// make img clickable to new tab
+document.body.querySelectorAll("img").forEach(img => {
+	img.outerHTML = `<a href="${img.src}" target="${img.alt}">${img.outerHTML}</a>`;
+});
