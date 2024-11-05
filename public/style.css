@@ -175,3 +175,9 @@ div.center {
 .sidebar .button a {
 	color: var(--fg);
 }
+
+code {
+	color: var(--ifg);
+	background-color: var(--ibg);
+	padding: 0 0.5ch;
+}

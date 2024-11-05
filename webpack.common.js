@@ -8,7 +8,9 @@ module.exports = {
     edit: "./src/client/pages/edit.tsx",
     nav: "./src/client/pages/nav.tsx",
     "404": "./src/client/pages/404.tsx",
-		delete: "./src/client/pages/delete.tsx"
+    delete: "./src/client/pages/delete.tsx",
+
+    formatia: "./src/client/scripts/formatia.ts"
   },
   module: {
     rules: [
