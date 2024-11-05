@@ -10,7 +10,7 @@
 
 @media (prefers-color-scheme: light) {
 	:root {
-		--fg: darkslateblue;
+		--fg: #2b718c;
 		--bg: blanchedalmond;
 		--afg: darkred;
 		--bfg: rgb(95, 196, 162);
