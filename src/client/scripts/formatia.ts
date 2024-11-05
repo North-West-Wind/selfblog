@@ -19,11 +19,7 @@ const SURROUNDABLES = {
 
 const KEYS = Object.keys(SURROUNDABLES);
 
-let body = document.body.innerHTML;
-
-// replace {this} with the current path basename
-body = body.replace(/\{this\}/g, window.location.pathname.split("/").pop()!);
-
+const body = document.body.innerHTML;
 const stack: string[] = [];
 let insideTag = false;
 let newBody = "";
