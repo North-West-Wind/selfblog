@@ -1,13 +1,20 @@
-const ROTATIONS: number[] = Array(3).fill(() => Math.round(Math.random() * 330) + 30).map(x => x());
+const ROTATIONS: number[] = Array(3).fill(() => Math.round(Math.random() * 180) + 90).map(x => x());
+
+// add styles
+const style = document.createElement('style');
+for (let ii = 0; ii < ROTATIONS.length; ii++) {
+	style.innerHTML += `span.colored-${ii} { filter: hue-rotate(${ROTATIONS[ii]}deg) }`
+}
+document.getElementsByTagName('head')[0].appendChild(style);
 
 const SURROUNDABLES = {
-	'"': [`<span style="filter:hue-rotate(${ROTATIONS[0]}deg)">"`, "\"</span>"],
-	"'": [`<span style="filter:hue-rotate(${ROTATIONS[1]}deg)">'`, "'</span>"],
+	'"': [`<span class="colored-0">"`, "\"</span>"],
+	"'": [`<span class="colored-1">'`, "'</span>"],
 	"`": ["<code>", "</code>"],
 	"*": ["<b>", "</b>"],
 	"_": ["<i>", "</i>"],
 	"^": [`<span style="font-size:smaller">`, "</span>"],
-	"|": [`<span style="filter:hue-rotate(${ROTATIONS[2]}deg)">`, "</span>"],
+	"|": [`<span class="colored-2">`, "</span>"],
 };
 
 const KEYS = Object.keys(SURROUNDABLES);
