@@ -22,7 +22,7 @@
 
 body {
 	font-family: Kanit, Arial, Helvetica, sans-serif;
-	padding: 6vmin 8vmax;
+	padding: 6vmin;
 	background-color: var(--bg);
 	color: var(--fg);
 }
