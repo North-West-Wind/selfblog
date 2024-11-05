@@ -28,18 +28,22 @@ for (let ii = 0; ii < body.length; ii++) {
 	else if (char == ">") insideTag = false;
 	// escape character
 	if (!insideTag && char == "\\" && ii != body.length - 1) {
-		const char = body.charAt(ii+1);
-		if (KEYS.includes(char) || char == "\\") {
-			newBody += char;
+		const nextChar = body.charAt(ii+1);
+		if (KEYS.includes(nextChar) || nextChar == "\\") {
+			newBody += nextChar;
 			ii++;
 		}
 		continue;
 	}
 	if (!insideTag && KEYS.includes(char)) {
 		if (stack[stack.length - 1] == char) {
+			if (ii != body.length - 1 && /\w/.test(body.charAt(ii+1))) continue;
+			// parse only if next char is not alphanumeric
 			stack.pop();
 			newBody += SURROUNDABLES[char as keyof typeof SURROUNDABLES][1];
 		} else {
+			if (ii != 0 && /\w/.test(body.charAt(ii-1))) continue;
+			// parse only if prev char is not alphanumeric
 			stack.push(char);
 			newBody += SURROUNDABLES[char as keyof typeof SURROUNDABLES][0];
 		}
