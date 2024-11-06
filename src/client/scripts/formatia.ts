@@ -44,12 +44,18 @@ for (let ii = 0; ii < body.length; ii++) {
 	}
 	if (!insideTag && KEYS.includes(char)) {
 		if (stack[stack.length - 1] == char) {
-			if (ii != body.length - 1 && ANY_LETTER_REGEX.test(body.charAt(ii+1))) continue;
+			if (ii != body.length - 1 && ANY_LETTER_REGEX.test(body.charAt(ii+1))) {
+				newBody += char;
+				continue;
+			}
 			// parse only if next char is not alphanumeric
 			stack.pop();
 			newBody += SURROUNDABLES[char as keyof typeof SURROUNDABLES][1];
 		} else {
-			if (ii != 0 && ANY_LETTER_REGEX.test(body.charAt(ii-1))) continue;
+			if (ii != 0 && ANY_LETTER_REGEX.test(body.charAt(ii-1))) {
+				newBody += char;
+				continue;
+			}
 			// parse only if prev char is not alphanumeric
 			stack.push(char);
 			newBody += SURROUNDABLES[char as keyof typeof SURROUNDABLES][0];
