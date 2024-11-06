@@ -4,7 +4,6 @@ const useVertical = () => {
 	const [vertical, setVertical] = useState(false);
 	useEffect(() => {
 		const onresize = () => {
-			console.log("resizing. vertical?", window.innerWidth < window.innerHeight);
 			setVertical(window.innerWidth < window.innerHeight);
 		};
 		onresize();

@@ -1,9 +1,13 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
 import NavApp from "./NavApp";
+import { hydrate } from "preact";
 
-createRoot(document.getElementById("nav")!).render(
-  <React.StrictMode>
-    <NavApp />
-  </React.StrictMode>
-);
+const observer = new MutationObserver((list) => {
+  if (list.some(mutation => mutation.type === "attributes" && mutation.attributeName === "formatia")) {
+    hydrate(<NavApp />, document.getElementById("nav")!);
+    observer.disconnect();
+  }
+});
+
+observer.observe(document.body, { attributes: true });
+
+hydrate(<NavApp />, document.getElementById("nav")!);

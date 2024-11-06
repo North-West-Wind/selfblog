@@ -4,8 +4,9 @@ const ROTATIONS: number[] = Array(3).fill(() => Math.round(Math.random() * 180) 
 {
 	const style = document.createElement('style');
 	for (let ii = 0; ii < ROTATIONS.length; ii++) {
-		style.innerHTML += `span.colored-${ii} { filter: hue-rotate(${ROTATIONS[ii]}deg) }`
+		style.innerHTML += `span.colored-${ii}{filter:hue-rotate(${ROTATIONS[ii]}deg)}`
 	}
+	style.innerHTML += `span.dimmed{filter:grayscale()}`;
 	document.getElementsByTagName('head')[0].appendChild(style);
 }
 
@@ -68,9 +69,15 @@ if (stack.length) console.warn("Stack is not empty after formatting");
 // markdown links
 newBody = newBody.replace(/\[(.*)\]\((.*)\)/g, `<a href="$2" target="$1">$1</a>`);
 
+// paratheses
+newBody = newBody.replace(/\((.*)\)/g, `<span class="dimmed">($1)</span>`);
+
 document.body.innerHTML = newBody;
 
 // make img clickable to new tab
 document.body.querySelectorAll("img").forEach(img => {
 	img.outerHTML = `<a href="${img.src}" target="${img.alt}">${img.outerHTML}</a>`;
 });
+
+// change attribute of body to notify nav bar re-render
+document.body.setAttribute("formatia", "");

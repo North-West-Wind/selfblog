@@ -181,3 +181,7 @@ code {
 	background-color: var(--ibg);
 	padding: 0 0.5ch;
 }
+
+.hidden {
+	display: none;
+}
