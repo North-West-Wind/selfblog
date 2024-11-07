@@ -10,7 +10,8 @@ module.exports = {
     "404": "./src/client/pages/404.tsx",
     delete: "./src/client/pages/delete.tsx",
 
-    formatia: "./src/client/scripts/formatia.ts"
+    formatia: "./src/client/scripts/formatia.ts",
+    automatia: "./src/client/scripts/automatia.ts",
   },
   module: {
     rules: [

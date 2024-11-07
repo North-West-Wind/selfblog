@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:dev": "tsc --watch --preserveWatchOutput",
-    "start:dev": "nodemon dist/index.js & webpack -w --config webpack.dev.js",
+    "start:dev": "nodemon dist/index.js",
     "build": "npm run build-server && npm run build-client",
     "build-server": "babel -x .ts,.tsx src -d dist --source-maps inline",
+    "build-server:dev": "babel -w -x .ts,.tsx src -d dist --source-maps inline",
     "build-client": "webpack --config webpack.prod.js",
+    "build-client:dev": "webpack -w --config webpack.dev.js",
     "start": "node dist/index.js"
   },
   "keywords": [],
