@@ -20,16 +20,12 @@ const onResize = () => {
 	const vertical = window.innerHeight > window.innerWidth;
 	if (vertical && !prevVert) {
 		prevVert = vertical;
-		flexDivs.forEach(div => {
-			div.classList.remove("flex");
-			div.classList.add("automatia-vertical");
-		});
+		flexDivs.forEach(div => div.classList.remove("flex"));
+		document.body.querySelectorAll("img").forEach(img => img.classList.add("automatia-vertical"));
 	} else if (!vertical && prevVert) {
 		prevVert = vertical;
-		flexDivs.forEach(div => {
-			div.classList.add("flex");
-			div.classList.remove("automatia-vertical");
-		});
+		flexDivs.forEach(div => div.classList.add("flex"));
+		document.body.querySelectorAll("img").forEach(img => img.classList.remove("automatia-vertical"));
 	}
 }
 
