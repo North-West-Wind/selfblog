@@ -88,7 +88,7 @@ app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
 	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
 	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) return res.sendStatus(404);
-	const title = req.body.name.split(" ").slice(0, 5).join(" ").replace(/[^a-z0-9]/gi, "").toLowerCase();
+	const title = (req.body.name as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
 	fs.renameSync(dir, path.join("data", req.params.year, req.params.month, req.params.day, title));
 	res.send(title);
 });
