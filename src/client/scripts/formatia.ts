@@ -1,4 +1,8 @@
-const ROTATIONS: number[] = Array(3).fill(() => Math.round(Math.random() * 180) + 90).map(x => x());
+const ROTATIONS: number[] = Array(3);
+
+ROTATIONS[0] = Math.round(Math.random() * 75) + 45;
+ROTATIONS[1] = Math.round(Math.random() * 120) + ROTATIONS[0];
+ROTATIONS[2] = Math.round(Math.random() * 75) + ROTATIONS[1];
 
 // add styles
 {
