@@ -21,8 +21,12 @@ const AllPostsComponent = (props: { posts?: Post[] }) => {
 	return <>
 		{posts === undefined && <h2>Loading posts...</h2>}
 		{Array.isArray(posts) && posts.length && <>
-			<h2>Posts</h2>
-			{posts.map(p => <h3><a href={p.url}>{p.title}</a></h3>)}
+			<table className="more" style={{ marginTop: "calc(4vh + max(2vw, 4vh))" }}>
+				<tbody>
+					<tr><th>Date</th><th>Post</th></tr>
+					{posts.map(p => <tr key={p.title}><td style={{ textAlign: "center" }}>{p.date}</td><td><a href={p.url}>{p.title}</a></td></tr>)}
+				</tbody>
+			</table>
 			<h3>End of list</h3>
 		</>}
 	</>

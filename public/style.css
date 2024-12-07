@@ -185,3 +185,19 @@ code {
 .hidden {
 	display: none;
 }
+
+table.more {
+	width: 100%;
+	margin: auto;
+	font-size: max(2.25vw, 2.5vh);
+	filter: brightness(110%);
+}
+
+table.more th {
+	border: 1px solid;
+	padding: 1vmax;
+}
+
+table.more td {
+	padding: 0.5vmax;
+}

@@ -62,7 +62,7 @@ export function generatePostArray(limit = 0) {
 		const year = item.date.getFullYear();
 		const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
 		const day = item.date.getDate().toString().padStart(2, "0");
-		return { title: `${year}/${month}/${day} - ${item.title}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
+		return { title: `${item.title}`, date: `${year}/${month}/${day}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
 	});
 }
 
