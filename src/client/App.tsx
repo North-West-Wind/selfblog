@@ -22,7 +22,7 @@ const App = (props: { latest?: string, posts?: Post[] }) => {
 			<div style={{ textAlign: vertical ? "center" : "left", width: vertical ? "100%" : "auto" }}>
 				<h1>NorthWestBlog</h1>
 				<h3>The blogging site of NorthWestWind.</h3>
-				<h3>Idea in a week. Deployment in 3 days.</h3>
+				<h3>I wrote this in 3 days.</h3>
 			</div>
 			{!vertical && <div className="flex vcenter" style={{ marginLeft: "auto", marginTop: "4vw" }}>
 				<img src="/assets/icon.gif" style={{ borderRadius: "50%", aspectRatio: "1/1", width: "20vw", height: "20vw" }} />
