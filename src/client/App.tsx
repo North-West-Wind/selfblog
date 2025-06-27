@@ -2,6 +2,7 @@ import { Post } from "src/types";
 import LatestPostComponent from "./components/LatestPost";
 import MorePostsComponent from "./components/MorePosts";
 import useVertical from "./hooks/useVertical";
+import { Base64 } from "js-base64";
 
 const App = (props: { latest?: string, posts?: Post[] }) => {
 	if (!props.latest || !props.posts) {
@@ -9,7 +10,7 @@ const App = (props: { latest?: string, posts?: Post[] }) => {
 		const data = document.body.getAttribute("data");
 		if (data)
 			try {
-				const json = JSON.parse(atob(data));
+				const json = JSON.parse(Base64.decode(data));
 				props.latest = json.latest;
 				props.posts = json.posts;
 			} catch (err) {}

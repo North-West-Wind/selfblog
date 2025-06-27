@@ -1,3 +1,4 @@
+import { Base64 } from "js-base64";
 import { useEffect, useState } from "preact/hooks";
 import { Post } from "src/types";
 
@@ -7,7 +8,7 @@ const AllPostsComponent = (props: { posts?: Post[] }) => {
 		const data = document.body.getAttribute("data");
 		if (data)
 			try {
-				props.posts = JSON.parse(atob(data));
+				props.posts = JSON.parse(Base64.decode(data));
 			} catch (err) {}
 	}
 	const [posts, setPosts] = useState<Post[] | undefined>(props.posts);
