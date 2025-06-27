@@ -5,7 +5,7 @@ import * as fs from "fs";
 import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
 import * as path from "path";
-import { generateFeed, generateLatest, generatePostArray } from "./util";
+import { checkAuth, generateFeed, generateLatest, generatePostArray } from "./util";
 import compression from "compression";
 import sirv from "sirv";
 import { renderIndexPage, renderListPage } from "./ssr";
@@ -42,8 +42,15 @@ app.get("/api/list", (req, res) => {
 });
 
 app.post("/api/new", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.title || !req.body.date) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
+	if (!req.body?.title || !req.body.date) {
+		res.sendStatus(400);
+		return;
+	}
 	const date = new Date(req.body.date);
 	const title = (req.body.title as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
 	const dir = path.join("data", date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
@@ -62,10 +69,16 @@ app.post("/api/new", (req, res) => {
 });
 
 app.get("/api/edit/:year/:month/:day/:post/files", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ")) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
 	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
-	if (!fs.existsSync(dir)) return res.sendStatus(404);
+	if (!fs.existsSync(dir)) {
+		res.sendStatus(404);
+		return;
+	}
 	const files: { name: string, type: "txt" | "bin" }[] = [];
 	for (const file of fs.readdirSync(dir)) {
 		if (isTextPath(path.join(dir, file))) files.push({ name: file, type: "txt" });
@@ -75,27 +88,50 @@ app.get("/api/edit/:year/:month/:day/:post/files", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/new", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.name) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
+	if (!req.body?.name) {
+		res.sendStatus(400);
+		return;
+	}
 	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.body.name);
 	if (!fs.existsSync(file)) fs.createWriteStream(file).end();
 	res.sendStatus(200);
 });
 
 app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
-	console.log(req.body);
-	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.name) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
+	if (!req.body?.name) {
+		res.sendStatus(400);
+		return;
+	}
 	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
-	if (!fs.existsSync(dir)) return res.sendStatus(404);
+	if (!fs.existsSync(dir)) {
+		res.sendStatus(404);
+		return;
+	}
 	const title = (req.body.name as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
 	fs.renameSync(dir, path.join("data", req.params.year, req.params.month, req.params.day, title));
 	res.send(title);
 });
 
 app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
-	if (!req.body?.password || !req.files?.file) return res.sendStatus(400);
-	if (req.body.password !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req, true);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
+	if (!req.files?.file) {
+		res.sendStatus(400);
+		return;
+	}
 	const uploaded = <UploadedFile> req.files.file;
 	uploaded.mv(path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, uploaded.name), err => {
 		if (err) return res.sendStatus(500);
@@ -104,45 +140,80 @@ app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
 });
 
 app.get("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ")) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
 	const file = path.join(__dirname , "../data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) return res.sendStatus(404);
-	return res.sendFile(file);
+	if (!fs.existsSync(file)) res.sendStatus(404);
+	else res.sendFile(file);
 });
 
 app.post("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.code) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
+	if (!req.body?.code) {
+		res.sendStatus(400);
+		return;
+	}
 	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) return res.sendStatus(404);
+	if (!fs.existsSync(file)) {
+		res.sendStatus(404);
+		return;
+	}
 	fs.writeFileSync(file, req.body.code);
-	return res.sendStatus(200);
+	res.sendStatus(200);
 });
 
 app.patch("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ") || !req.body?.name) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
+	if (!req.body?.name) {
+		res.sendStatus(400);
+		return;
+	}
 	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) return res.sendStatus(404);
+	if (!fs.existsSync(file)) {
+		res.sendStatus(404);
+		return;
+	}
 	fs.renameSync(file, path.join(__dirname , "../data", req.params.year, req.params.month, req.params.day, req.params.post, req.body.name));
-	return res.sendStatus(200);
+	res.sendStatus(200);
 });
 
 app.delete("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ")) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
 	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) return res.sendStatus(404);
+	if (!fs.existsSync(file)) {
+		res.sendStatus(404);
+		return;
+	}
 	fs.rmSync(file);
 	res.sendStatus(200);
 });
 
 app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
-	if (!req.headers.authorization?.startsWith("Bearer ")) return res.sendStatus(400);
-	if (req.headers.authorization.slice(7) !== process.env.PASSWORD) return res.sendStatus(403);
+	const auth = checkAuth(req);
+	if (auth != 200) {
+		res.sendStatus(auth);
+		return;
+	}
 	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
-	if (!fs.existsSync(dir)) return res.sendStatus(404);
+	if (!fs.existsSync(dir)) {
+		res.sendStatus(404);
+		return;
+	}
 	fs.rmSync(dir, { recursive: true });
 	res.sendStatus(200);
 });

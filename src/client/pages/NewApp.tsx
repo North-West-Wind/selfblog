@@ -1,3 +1,4 @@
+import { hashSync } from "bcryptjs";
 import React, { useRef, useState } from "react";
 
 const NewApp: React.FC = () => {
@@ -17,7 +18,7 @@ const NewApp: React.FC = () => {
 		fetch("/api/new", {
 			method: "POST",
 			headers: {
-				Authorization: "Bearer " + pwRef.current.value,
+				Authorization: hashSync(pwRef.current.value),
 				"Content-Type": "application/json"
 			},
 			body: JSON.stringify({ title: titleRef.current.value, date: dateRef.current.value })

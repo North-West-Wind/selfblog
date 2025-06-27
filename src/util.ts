@@ -1,5 +1,7 @@
 import { Feed } from "@numbered/feed";
+import { compareSync } from "bcryptjs";
 import { load } from "cheerio";
+import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -72,4 +74,16 @@ export function generateLatest() {
 	const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
 	const day = item.date.getDate().toString().padStart(2, "0");
 	return `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}`;
+}
+
+export function checkAuth(req: Request, useBody = false) {
+	let hashed: string;
+	if (useBody) {
+		if (!req.body?.password) return 400;
+		hashed = req.body.password;
+	} else {
+		if (!req.headers.authorization) return 400;
+		hashed = req.headers.authorization;
+	}
+	return compareSync(process.env.PASSWORD!, hashed) ? 200 : 403;
 }

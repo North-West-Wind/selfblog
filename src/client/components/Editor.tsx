@@ -1,4 +1,5 @@
 import { Editor } from "@monaco-editor/react";
+import { hashSync } from "bcryptjs";
 import React from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -14,7 +15,7 @@ export default class EditorComponent extends React.Component {
 			const file = window.location.hash?.slice(1);
 			this.setState({ file });
 			if (this.state.password)
-				fetch(`/api${window.location.pathname}/${file}`, { headers: { Authorization: `Bearer ${this.state.password}` } }).then(async res => {
+				fetch(`/api${window.location.pathname}/${file}`, { headers: { Authorization: hashSync(this.state.password) } }).then(async res => {
 					if (res.ok) this.setState({ code: await res.text() });
 					else this.setState({ code: "" });
 				});
@@ -40,7 +41,7 @@ export default class EditorComponent extends React.Component {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${this.state.file}`, {
 					method: "POST",
-					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+					headers: { Authorization: hashSync(this.state.password), "Content-Type": "application/json" },
 					body: JSON.stringify({ code: this.state.code })
 				}).then(res => {
 					if (res.ok) resolve();
@@ -56,7 +57,7 @@ export default class EditorComponent extends React.Component {
 	reload() {
 		if (this.state.password) {
 			toast.promise(new Promise<void>((resolve, reject) => {
-				fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: `Bearer ${this.state.password}` } }).then(async res => {
+				fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: hashSync(this.state.password) } }).then(async res => {
 					if (res.ok) {
 						this.setState({ files: await res.json() });
 						resolve();
@@ -69,7 +70,7 @@ export default class EditorComponent extends React.Component {
 			})
 			if (this.state.file) {
 				toast.promise(new Promise<void>((resolve, reject) => {
-					fetch(`/api${window.location.pathname}/${this.state.file}`, { headers: { Authorization: `Bearer ${this.state.password}` } }).then(async res => {
+					fetch(`/api${window.location.pathname}/${this.state.file}`, { headers: { Authorization: hashSync(this.state.password) } }).then(async res => {
 						const text = await res.text();
 						if (res.ok) {
 							this.setState({ code: text });
@@ -95,7 +96,7 @@ export default class EditorComponent extends React.Component {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${file}`, {
 					method: "PATCH",
-					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+					headers: { Authorization: hashSync(this.state.password), "Content-Type": "application/json" },
 					body: JSON.stringify({ name })
 				}).then(res => {
 					if (res.ok) {
@@ -118,7 +119,7 @@ export default class EditorComponent extends React.Component {
 			if (!name) return;
 			fetch(`/api${window.location.pathname}/rename`, {
 				method: "POST",
-				headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+				headers: { Authorization: hashSync(this.state.password), "Content-Type": "application/json" },
 				body: JSON.stringify({ name })
 			}).then(async res => {
 				if (res.ok) {
@@ -137,7 +138,7 @@ export default class EditorComponent extends React.Component {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/new`, {
 					method: "POST",
-					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" },
+					headers: { Authorization: hashSync(this.state.password), "Content-Type": "application/json" },
 					body: JSON.stringify({ name })
 				}).then(res => {
 					if (res.ok) {
@@ -161,7 +162,7 @@ export default class EditorComponent extends React.Component {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${file}`, {
 					method: "DELETE",
-					headers: { Authorization: `Bearer ${this.state.password}`, "Content-Type": "application/json" }
+					headers: { Authorization: hashSync(this.state.password), "Content-Type": "application/json" }
 				}).then(res => {
 					if (res.ok) {
 						this.reload();
