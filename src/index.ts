@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express from "express";
-import fileUpload, { UploadedFile } from "express-fileupload";
 import * as fs from "fs";
 import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
@@ -9,6 +8,7 @@ import { checkAuth, generateFeed, generateLatest, generatePostArray } from "./ut
 import compression from "compression";
 import sirv from "sirv";
 import { renderIndexPage, renderListPage } from "./ssr";
+import multer from "multer";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
 
@@ -16,7 +16,7 @@ const app = express();
 app.use(compression());
 app.use("/", sirv("./public", { extensions: [] }));
 app.use(express.json());
-app.use(fileUpload());
+app.use(multer({ dest: "data/" }).single("file"));
 
 app.get("/p/latest", (_req, res) => {
 	const item = generateFeed("", 1).items[0];
@@ -123,17 +123,18 @@ app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
+	console.log(req.body);
 	const auth = checkAuth(req, true);
 	if (auth != 200) {
 		res.sendStatus(auth);
 		return;
 	}
-	if (!req.files?.file) {
+	if (!req.file) {
 		res.sendStatus(400);
 		return;
 	}
-	const uploaded = <UploadedFile> req.files.file;
-	uploaded.mv(path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, uploaded.name), err => {
+	const uploaded = <Express.Multer.File> req.file;
+	fs.rename(uploaded.path, path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, uploaded.originalname), err => {
 		if (err) return res.sendStatus(500);
 		res.sendStatus(200);
 	});
@@ -156,7 +157,7 @@ app.post("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 		res.sendStatus(auth);
 		return;
 	}
-	if (!req.body?.code) {
+	if (typeof req.body?.code != "string") {
 		res.sendStatus(400);
 		return;
 	}
