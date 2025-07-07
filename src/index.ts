@@ -123,7 +123,6 @@ app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
-	console.log(req.body);
 	const auth = checkAuth(req, true);
 	if (auth != 200) {
 		res.sendStatus(auth);
