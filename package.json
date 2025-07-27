@@ -11,7 +11,9 @@
     "build-server:dev": "babel -w -x .ts,.tsx src -d dist --source-maps inline",
     "build-client": "webpack --config webpack.prod.js",
     "build-client:dev": "webpack -w --config webpack.dev.js",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+
+		"patch-favicon": "node scripts/add-favicon.js"
   },
   "keywords": [],
   "author": "NorthWestWind",
