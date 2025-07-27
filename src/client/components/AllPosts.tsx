@@ -1,3 +1,4 @@
+import { abbreviateNumber } from "js-abbreviation-number";
 import { Base64 } from "js-base64";
 import { useEffect, useState } from "preact/hooks";
 import { Post } from "src/types";
@@ -19,13 +20,19 @@ const AllPostsComponent = (props: { posts?: Post[] }) => {
 		});
 	}, []);
 
+	const maxVisit = Math.max(...posts?.map(post => post.visits) || [1]);
+
 	return <>
 		{posts === undefined && <h2>Loading posts...</h2>}
 		{Array.isArray(posts) && posts.length && <>
 			<table className="more" style={{ marginTop: "calc(4vh + max(2vw, 4vh))" }}>
 				<tbody>
-					<tr><th>Date</th><th>Post</th></tr>
-					{posts.map(p => <tr key={p.title}><td style={{ textAlign: "center" }}>{p.date}</td><td><a href={p.url}>{p.title}</a></td></tr>)}
+					<tr><th>Date</th><th>Post</th><th>Visits</th></tr>
+					{posts.map(p => <tr key={p.title}>
+						<td style={{ textAlign: "center" }}>{p.date}</td>
+						<td><a href={p.url}>{p.title}</a></td>
+						<td style={{ filter: `hue-rotate(${180 * p.visits / maxVisit}deg)` }}>{abbreviateNumber(p.visits)}</td>
+					</tr>)}
 				</tbody>
 			</table>
 			<h3>End of list</h3>

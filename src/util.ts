@@ -4,6 +4,7 @@ import { load } from "cheerio";
 import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";
+import { getVisit } from "./db";
 
 export function generateFeed(baseUrl: string, limit: number) {
 	if (process.env.BASE_URL) baseUrl = process.env.BASE_URL;
@@ -44,7 +45,7 @@ export function generateFeed(baseUrl: string, limit: number) {
 							title: $("title").text(),
 							id: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
 							link: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
-							date: date,
+							date,
 							image: img ? `${baseUrl}/p/${year}/${month}/${day}/${img}` : undefined,
 							author: [{
 								name: "NorthWestWind",
@@ -66,7 +67,8 @@ export function generatePostArray(limit = 0) {
 		const year = item.date.getFullYear();
 		const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
 		const day = item.date.getDate().toString().padStart(2, "0");
-		return { title: `${item.title}`, date: `${year}/${month}/${day}`, url: `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}` };
+		const post = item.id?.split("/").pop();
+		return { title: `${item.title}`, date: `${year}/${month}/${day}`, url: `/p/${year}/${month}/${day}/${post}`, visits: post ? getVisit(year, month, day, post) : 0 };
 	});
 }
 

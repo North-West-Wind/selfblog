@@ -3,8 +3,8 @@ import { useEffect, useState } from "preact/hooks";
 const LatestPostComponent = (props: { latest?: string }) => {
 	const [latestPost, setLatestPost] = useState<string | null | undefined>(props.latest);
 	useEffect(() => {
-		fetch("/p/latest").then(res => {
-			if (!res.ok) setLatestPost(null);
+		fetch("/api/list?limit=1").then(async res => {
+			if (!res.ok || !(await res.json() as any[]).length) setLatestPost(null);
 			else setLatestPost("/p/latest");
 		});
 	}, []);

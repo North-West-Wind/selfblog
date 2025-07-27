@@ -9,6 +9,7 @@ import compression from "compression";
 import sirv from "sirv";
 import { renderIndexPage, renderListPage } from "./ssr";
 import multer from "multer";
+import { incrementVisit } from "./db";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
 
@@ -28,8 +29,11 @@ app.get("/p/latest", (_req, res) => {
 
 app.get("/p/:year/:month/:day/:post", (req, res) => {
 	const file = path.join(__dirname, "../data", req.params.year, req.params.month, req.params.day, req.params.post, "index.html");
-	if (fs.existsSync(file)) res.sendFile(path.join(__dirname, "../data", req.params.year, req.params.month, req.params.day, req.params.post, "index.html"));
-	else res.sendFile(path.join(__dirname, "../public/errors/404.html"));
+	if (fs.existsSync(file)) {
+		if (req.headers["sec-fetch-dest"] != "iframe")
+			incrementVisit(req.params.year, req.params.month, req.params.day, req.params.post);
+		res.sendFile(file);
+	} else res.sendFile(path.join(__dirname, "../public/errors/404.html"));
 });
 
 app.get("/p/:year/:month/:day/:post/:file", (req, res) => {
