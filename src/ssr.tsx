@@ -42,3 +42,8 @@ export function renderIndexPage(html: string, latest: string, posts: Post[]) {
 	html = html.replace("<!--app-html-->", renderToString(<App latest={latest} posts={posts} />));
 	return indexCache = html;
 }
+
+export function invalidatePostCache() {
+	indexCache = "";
+	listCache = "";
+}

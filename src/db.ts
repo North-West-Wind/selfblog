@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import * as crypto from "crypto";
+import { invalidatePostCache } from "./ssr";
 
 type Post = {
 	hashId: string;
@@ -55,6 +56,7 @@ export function incrementVisit(year: string, month: string, day: string, name: s
 	const existing = data.get(hashId);
 	if (existing) data.set(hashId, { visits: existing.visits + 1, changed: true });
 	else data.set(hashId, { visits: 1, changed: true });
+	invalidatePostCache();
 }
 
 export function getVisit(year: string | number, month: string | number, day: string | number, name: string) {
