@@ -223,7 +223,6 @@ app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
 });
 
 app.get("/rss", (req, res) => {
-	console.log(`${req.protocol}://${req.headers.host}`);
 	res.setHeader("Content-Disposition", "attachment; filename=\"northwestblog.rss\"");
 	res.send(generateFeed(`${req.protocol}://${req.headers.host}`, parseInt(<string> req.query.limit) || 0).rss2());
 });
