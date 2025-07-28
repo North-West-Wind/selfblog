@@ -30,7 +30,7 @@ app.get("/p/latest", (_req, res) => {
 app.get("/p/:year/:month/:day/:post", (req, res) => {
 	const file = path.join(__dirname, "../data", req.params.year, req.params.month, req.params.day, req.params.post, "index.html");
 	if (fs.existsSync(file)) {
-		if (req.headers["sec-fetch-dest"] != "iframe")
+		if (!fs.existsSync(path.join(path.dirname(file), ".hidden")) && req.headers["sec-fetch-dest"] != "iframe")
 			incrementVisit(req.params.year, req.params.month, req.params.day, req.params.post);
 		res.sendFile(file);
 	} else res.sendFile(path.join(__dirname, "../public/errors/404.html"));
