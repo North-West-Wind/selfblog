@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "nodemon dist/index.js",
+    "start:dev": "DEBUG=1 nodemon dist/index.js",
     "build": "npm run build-server && npm run build-client",
     "build-server": "babel -x .ts,.tsx src -d dist --source-maps inline",
     "build-server:dev": "babel -w -x .ts,.tsx src -d dist --source-maps inline",

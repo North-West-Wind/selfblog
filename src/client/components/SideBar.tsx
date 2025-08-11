@@ -13,7 +13,7 @@ export default class SideBarComponent extends React.Component {
 		return <>
 			<div className="sidebar-button" onClick={() => this.setState({ opened: true })}>≡</div>
 			<div className={"sidebar" + (this.state.opened ? "" : " hidden")}>
-				<div className="sidebar-close" onClick={() => this.setState({ opened: false })}>X</div>
+				<div className="sidebar-close" onClick={() => this.setState({ opened: false })}>⨯</div>
 				<NavBarItemsComponent sidebar />
 			</div>
 		</>

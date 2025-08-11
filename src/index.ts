@@ -15,7 +15,7 @@ if (!fs.existsSync("data")) fs.mkdirSync("data");
 
 const app = express();
 app.use(compression());
-app.use("/", sirv("./public", { extensions: [] }));
+app.use("/", sirv("./public", { extensions: [], dev: !!process.env.DEBUG }));
 app.use(express.json());
 app.use(multer({ dest: "data/" }).single("file"));
 
@@ -229,6 +229,10 @@ app.get("/rss", (req, res) => {
 
 app.get("/about", (_req, res) => {
 	res.redirect(process.env.ABOUT_REDIRECT || "/");
+});
+
+app.get("/donate", (_req, res) => {
+	res.redirect(process.env.DONATE_REDIRECT || "/");
 });
 
 app.get("/new", (_req, res) => {

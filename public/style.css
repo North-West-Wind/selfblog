@@ -118,6 +118,16 @@ div.center {
 	filter: none;
 }
 
+.button.donation {
+	margin-left: auto;
+	padding: 0;
+	height: calc(max(2vw, 4vh) + 6vh);
+}
+
+.button.donation img {
+	height: calc(max(2vw, 4vh) + 6vh);
+}
+
 .topbar, .sidebar {
 	position: fixed;
 	width: 100vw;
@@ -150,6 +160,7 @@ div.center {
 
 .sidebar.hidden {
 	transform: translateX(-100%);
+	display: inherit;
 }
 
 .sidebar-close {
@@ -174,6 +185,23 @@ div.center {
 
 .sidebar .button a {
 	color: var(--fg);
+}
+
+.sidebar .button.donation {
+	position: absolute;
+	bottom: 0;
+	width: 100vw;
+}
+
+.sidebar .button.donation a {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: var(--afg);
+}
+
+.sidebar .button.donation a div {
+	margin-right: 1vmax;
 }
 
 code {

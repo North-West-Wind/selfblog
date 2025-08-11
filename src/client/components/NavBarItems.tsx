@@ -16,6 +16,12 @@ const NavBarItemsComponent: React.FC<Attributes> = (props: Attributes) => {
 		<div className="button">
 			<a href="/rss">RSS</a>
 		</div>
+		<div className="button donation" style={{ marginTop: props.sidebar ? "auto" : 0 }}>
+			<a href="/donate">
+				{props.sidebar && <div>Donate!</div>}
+				<img src="/assets/donation.svg" />
+			</a>
+		</div>
 	</>
 }
 
