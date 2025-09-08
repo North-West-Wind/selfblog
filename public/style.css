@@ -109,6 +109,10 @@ div.center {
 	cursor: pointer;
 }
 
+.button.mini {
+	width: fit-content;
+}
+
 .button a {
 	text-decoration: none;
 	color: var(--bg);
@@ -228,4 +232,16 @@ table.more th {
 
 table.more td {
 	padding: 0.5vmax;
+}
+
+.stamp {
+	margin-left: 1vmax;
+	padding: 1vh 1.5vh;
+	font-size: 2vmax;
+}
+
+/* suit web-stamp to our needs */
+div .ws-container {
+	background-color: #000a;
+	backdrop-filter: blur(1vmax);
 }

@@ -3,6 +3,8 @@ import LatestPostComponent from "./components/LatestPost";
 import MorePostsComponent from "./components/MorePosts";
 import useVertical from "./hooks/useVertical";
 import { Base64 } from "js-base64";
+import { useState } from "preact/compat";
+import WebStamp from "web-stamp";
 
 const App = (props: { latest?: string, posts?: Post[] }) => {
 	if (!props.latest || !props.posts) {
@@ -17,13 +19,20 @@ const App = (props: { latest?: string, posts?: Post[] }) => {
 	}
 
 	const vertical = useVertical();
+	const [stampOpened, setStampOpened] = useState(false);
+
+	const openStamp = () => setStampOpened(true);
 
   return <>
 		<div className="flex" style={{ marginTop: "calc(max(2vw, 4vh) + 4vh)" }}>
 			<div style={{ textAlign: vertical ? "center" : "left", width: vertical ? "100%" : "auto" }}>
-				<h1>NorthWestBlog</h1>
+				<div class="flex hcenter vcenter">
+					<h1>NorthWestBlog</h1>
+					{vertical && <div class="button mini stamp" onClick={openStamp}>Stamp!</div>}
+				</div>
 				<h3>The blogging site of NorthWestWind.</h3>
 				<h3>I wrote this in 3 days.</h3>
+				{!vertical && <div class="button mini stamp" onClick={openStamp}>Stamp!</div>}
 			</div>
 			{!vertical && <div className="flex vcenter" style={{ marginLeft: "auto", marginTop: "4vw" }}>
 				<img src="/assets/icon.gif" style={{ borderRadius: "50%", aspectRatio: "1/1", width: "20vw", height: "20vw" }} />
@@ -35,6 +44,7 @@ const App = (props: { latest?: string, posts?: Post[] }) => {
 
 		<LatestPostComponent latest={props.latest} />
 		<MorePostsComponent posts={props.posts} />
+		{stampOpened && <WebStamp src="/assets/stamp.svg" onClose={() => setStampOpened(false)} />}
 	</>;
 };
 
