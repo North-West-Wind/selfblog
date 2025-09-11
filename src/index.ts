@@ -18,6 +18,16 @@ app.use(compression());
 app.use("/", sirv("./public", { extensions: [], dev: !!process.env.DEBUG }));
 app.use(express.json());
 app.use(multer({ dest: "data/" }).single("file"));
+app.use((req, res, next) => {
+	if (req.method != "GET" || req.path.startsWith("/api/edit")) {
+		const auth = checkAuth(req);
+		if (auth != 200) {
+			res.sendStatus(auth);
+			return;
+		}
+	}
+	next();
+});
 
 app.get("/p/latest", (_req, res) => {
 	const item = generateFeed("", 1).items[0];
@@ -46,11 +56,6 @@ app.get("/api/list", (req, res) => {
 });
 
 app.post("/api/new", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	if (!req.body?.title || !req.body.date) {
 		res.sendStatus(400);
 		return;
@@ -73,11 +78,6 @@ app.post("/api/new", (req, res) => {
 });
 
 app.get("/api/edit/:year/:month/:day/:post/files", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
 		res.sendStatus(404);
@@ -92,11 +92,6 @@ app.get("/api/edit/:year/:month/:day/:post/files", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/new", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	if (!req.body?.name) {
 		res.sendStatus(400);
 		return;
@@ -107,11 +102,6 @@ app.post("/api/edit/:year/:month/:day/:post/new", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	if (!req.body?.name) {
 		res.sendStatus(400);
 		return;
@@ -127,11 +117,6 @@ app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
-	const auth = checkAuth(req, true);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	if (!req.file) {
 		res.sendStatus(400);
 		return;
@@ -144,22 +129,12 @@ app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
 });
 
 app.get("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	const file = path.join(__dirname , "../data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
 	if (!fs.existsSync(file)) res.sendStatus(404);
 	else res.sendFile(file);
 });
 
 app.post("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	if (typeof req.body?.code != "string") {
 		res.sendStatus(400);
 		return;
@@ -174,11 +149,6 @@ app.post("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 });
 
 app.patch("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	if (!req.body?.name) {
 		res.sendStatus(400);
 		return;
@@ -193,11 +163,6 @@ app.patch("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 });
 
 app.delete("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
 	if (!fs.existsSync(file)) {
 		res.sendStatus(404);
@@ -208,11 +173,6 @@ app.delete("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 });
 
 app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
-	const auth = checkAuth(req);
-	if (auth != 200) {
-		res.sendStatus(auth);
-		return;
-	}
 	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
 		res.sendStatus(404);

@@ -8,7 +8,7 @@ let code = "";
 let password = "";
 
 export default function EditorComponent() {
-	const [file, setFile] = useState(window.location.hash?.slice(1));
+	const [ext, setExt] = useState<string>();
 	const [files, setFiles] = useState<{ name: string, type: "txt" | "bin" }[]>([]);
 	const [hashed, setHashed] = useState("");
 	const monaco = useMonaco();
@@ -17,14 +17,13 @@ export default function EditorComponent() {
 		monaco?.languages.typescript.javascriptDefaults.setEagerModelSync(true);
 		
 		const hashchange = () => {
-			const file = window.location.hash?.slice(1);
-			setFile(file);
 			if (password)
-				fetch(`/api${window.location.pathname}/${file}`, { headers: { Authorization: hashSync(password) } }).then(async res => {
+				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: hashSync(password) } }).then(async res => {
 					if (res.ok) {
 						const text = await res.text();
 						code = text;
 						monaco?.editor.getModels()[0].setValue(text);
+						setExt(window.location.hash.split(".").pop());
 					} else {
 						code = "";
 						monaco?.editor.getModels()[0].setValue("");
@@ -61,7 +60,7 @@ export default function EditorComponent() {
 	const save = () => {
 		if (password)
 			toast.promise(new Promise<void>((resolve, reject) => {
-				fetch(`/api${window.location.pathname}/${file}`, {
+				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, {
 					method: "POST",
 					headers: { Authorization: hashSync(password), "Content-Type": "application/json" },
 					body: JSON.stringify({ code })
@@ -90,9 +89,9 @@ export default function EditorComponent() {
 				success: "File list reloaded!",
 				error: "Failed to reload file list!"
 			})
-			if (file) {
+			if (window.location.hash) {
 				toast.promise(new Promise<void>((resolve, reject) => {
-					fetch(`/api${window.location.pathname}/${file}`, { headers: { Authorization: hashSync(password) } }).then(async res => {
+					fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: hashSync(password) } }).then(async res => {
 						const text = await res.text();
 						if (res.ok) {
 							code = text;
@@ -125,7 +124,7 @@ export default function EditorComponent() {
 				}).then(res => {
 					if (res.ok) {
 						reload();
-						if (file == currentFile) window.location.hash = name;
+						if (window.location.hash.slice(1) == currentFile) window.location.hash = name;
 						resolve();
 					} else reject();
 				});
@@ -190,7 +189,7 @@ export default function EditorComponent() {
 				}).then(res => {
 					if (res.ok) {
 						reload();
-						if (file == currentFile) window.location.hash = "";
+						if (window.location.hash.slice(1) == currentFile) window.location.hash = "";
 						resolve();
 					} else reject();
 				});
@@ -248,7 +247,7 @@ export default function EditorComponent() {
 			</form>
 		</div>
 		<Editor
-			language={file?.split(".").pop() || "txt"}
+			language={ext || "txt"}
 			onChange={(value) => code = value || ""}
 			width="80%"
 			height="100vh"
