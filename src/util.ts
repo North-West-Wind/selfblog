@@ -80,14 +80,8 @@ export function generateLatest() {
 	return `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}`;
 }
 
-export function checkAuth(req: Request, useBody = false) {
-	let hashed: string;
-	if (useBody) {
-		if (!req.body?.password) return 400;
-		hashed = req.body.password;
-	} else {
-		if (!req.headers.authorization) return 400;
-		hashed = req.headers.authorization;
-	}
+export function checkAuth(req: Request) {
+	if (!req.headers.authorization && !req.body?.password) return 400;
+	const hashed = req.headers.authorization ?? req.body.password;
 	return compareSync(process.env.PASSWORD!, hashed) ? 200 : 403;
 }
