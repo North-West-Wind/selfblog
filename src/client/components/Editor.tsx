@@ -1,8 +1,8 @@
 import { Editor, useMonaco } from "@monaco-editor/react";
-import { hashSync } from "bcryptjs";
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { timeHash } from "../helper";
 
 let code = "";
 let password = "";
@@ -18,7 +18,7 @@ export default function EditorComponent() {
 		
 		const hashchange = () => {
 			if (password)
-				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: hashSync(password) } }).then(async res => {
+				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: timeHash(password) } }).then(async res => {
 					if (res.ok) {
 						const text = await res.text();
 						code = text;
@@ -47,10 +47,18 @@ export default function EditorComponent() {
 		return () => window.removeEventListener("keydown", keydown);
 	}, []);
 
+	useEffect(() => {
+		let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
+			timeout = undefined;
+			setHashed(timeHash(password));
+		}, (Math.floor(Date.now() / 300000) + 1) * 300000 - Date.now());
+		return () => timeout && clearTimeout(timeout);
+	}, [hashed]);
+
 	const onPwKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key == "Enter") {
 			password = e.currentTarget.value;
-			setHashed(hashSync(password));
+			setHashed(timeHash(password));
 
 			e.preventDefault();
 			(e.target as HTMLInputElement).blur();
@@ -62,7 +70,7 @@ export default function EditorComponent() {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, {
 					method: "POST",
-					headers: { Authorization: hashSync(password), "Content-Type": "application/json" },
+					headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
 					body: JSON.stringify({ code })
 				}).then(res => {
 					if (res.ok) resolve();
@@ -78,7 +86,7 @@ export default function EditorComponent() {
 	const reload = () => {
 		if (password) {
 			toast.promise(new Promise<void>((resolve, reject) => {
-				fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: hashSync(password) } }).then(async res => {
+				fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: timeHash(password) } }).then(async res => {
 					if (res.ok) {
 						setFiles(await res.json());
 						resolve();
@@ -91,7 +99,7 @@ export default function EditorComponent() {
 			})
 			if (window.location.hash) {
 				toast.promise(new Promise<void>((resolve, reject) => {
-					fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: hashSync(password) } }).then(async res => {
+					fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: timeHash(password) } }).then(async res => {
 						const text = await res.text();
 						if (res.ok) {
 							code = text;
@@ -119,7 +127,7 @@ export default function EditorComponent() {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${currentFile}`, {
 					method: "PATCH",
-					headers: { Authorization: hashSync(password), "Content-Type": "application/json" },
+					headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
 					body: JSON.stringify({ name })
 				}).then(res => {
 					if (res.ok) {
@@ -142,7 +150,7 @@ export default function EditorComponent() {
 			if (!name) return;
 			fetch(`/api${window.location.pathname}/rename`, {
 				method: "POST",
-				headers: { Authorization: hashSync(password), "Content-Type": "application/json" },
+				headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
 				body: JSON.stringify({ name })
 			}).then(async res => {
 				if (res.ok) {
@@ -161,7 +169,7 @@ export default function EditorComponent() {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/new`, {
 					method: "POST",
-					headers: { Authorization: hashSync(password), "Content-Type": "application/json" },
+					headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
 					body: JSON.stringify({ name })
 				}).then(res => {
 					if (res.ok) {
@@ -185,7 +193,7 @@ export default function EditorComponent() {
 			toast.promise(new Promise<void>((resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${currentFile}`, {
 					method: "DELETE",
-					headers: { Authorization: hashSync(password), "Content-Type": "application/json" }
+					headers: { Authorization: timeHash(password), "Content-Type": "application/json" }
 				}).then(res => {
 					if (res.ok) {
 						reload();

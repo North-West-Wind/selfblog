@@ -83,5 +83,6 @@ export function generateLatest() {
 export function checkAuth(req: Request) {
 	if (!req.headers.authorization && !req.body?.password) return 400;
 	const hashed = req.headers.authorization ?? req.body.password;
-	return compareSync(process.env.PASSWORD!, hashed) ? 200 : 403;
+	const now = Math.floor(Date.now() / 300000);
+	return compareSync(process.env.PASSWORD! + now, hashed) ? 200 : 403;
 }

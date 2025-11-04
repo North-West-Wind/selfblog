@@ -1,5 +1,5 @@
-import { hashSync } from "bcryptjs";
 import React, { useRef } from "react"
+import { timeHash } from "../helper";
 
 const DeleteApp: React.FC = () => {
 	const pwRef = useRef<HTMLInputElement>(null);
@@ -11,7 +11,7 @@ const DeleteApp: React.FC = () => {
 			else {
 				fetch(`/api/delete/${year}/${month}/${day}/${title}`, {
 					method: "DELETE",
-					headers: { Authorization: hashSync(pwRef.current.value) }
+					headers: { Authorization: timeHash(pwRef.current.value) }
 				}).then(res => {
 					if (res.ok) window.location.pathname = "/";
 					else if (res.status === 400) pwRef.current!.style.borderColor = "#ff0000";
