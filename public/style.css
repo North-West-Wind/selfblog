@@ -234,7 +234,7 @@ table.more td {
 	padding: 0.5vmax;
 }
 
-.h-card, .h-entry {
+.h-card {
 	display: none;
 }
 

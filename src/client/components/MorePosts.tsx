@@ -24,13 +24,6 @@ const MorePostsComponent = (props: { posts?: Post[] }) => {
 						<td style={{ textAlign: "center" }}>{p.date}</td>
 						<td><a href={p.url}>{p.title}</a></td>
 						<td style={{ filter: `hue-rotate(${180 * p.visits / maxVisit}deg)` }}>{abbreviateNumber(p.visits)}</td>
-						{/* h-entry */}
-						<div class="h-entry">
-							<time class="dt-published" datetime={p.date}>{p.date}</time>
-							<h1 class="p-name">{p.title}</h1>
-							<a class="u-url" href={p.url}></a>
-							{p.summary && <p class="p-summary">{p.summary}</p>}
-						</div>
 					</tr>)}
 				</tbody>
 			</table>
