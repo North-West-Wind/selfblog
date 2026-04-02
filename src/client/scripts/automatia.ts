@@ -3,6 +3,7 @@ let prevVert = false;
 const flexDivs: HTMLDivElement[] = [];
 
 document.body.querySelectorAll("img").forEach(img => {
+	if (img.id == "donation") return; // Ignore the donation image
 	let parent = img.parentElement;
 	while (parent?.tagName == "DIV" || parent?.tagName == "A") { // A is for formatia
 		if (parent.children.length == 1) {
