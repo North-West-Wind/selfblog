@@ -8,7 +8,7 @@ document.body.querySelectorAll("img").forEach(img => {
 	while (parent?.tagName == "DIV" || parent?.tagName == "A") { // A is for formatia
 		if (parent.children.length == 1) {
 			parent = parent.parentElement;
-		} else if (parent.children.length == 2) {
+		} else if (parent.children.length >= 2) {
 			// this is probably a side by side img/p
 			if (parent.classList.contains("flex"))
 				flexDivs.push(parent as HTMLDivElement);
