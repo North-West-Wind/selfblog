@@ -234,6 +234,15 @@ table.more td {
 	padding: 0.5vmax;
 }
 
+.h-card, .h-entry {
+	display: none;
+}
+
+.p-summary {
+	font-style: italic;
+	opacity: 0.75;
+}
+
 .stamp {
 	margin-left: 1vmax;
 	padding: 1vh 1.5vh;

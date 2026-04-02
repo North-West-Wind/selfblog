@@ -3,7 +3,6 @@ const path = require("path");
 module.exports = {
   entry: {
     main: "./src/client/index.tsx",
-    list: "./src/client/pages/list.tsx",
     new: "./src/client/pages/new.tsx",
     edit: "./src/client/pages/edit.tsx",
     nav: "./src/client/pages/nav.tsx",

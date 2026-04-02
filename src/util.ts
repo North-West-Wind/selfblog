@@ -5,6 +5,7 @@ import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";
 import { getVisit } from "./db";
+import { Post } from "./types";
 
 export function generateFeed(baseUrl: string, limit: number) {
 	if (process.env.BASE_URL) baseUrl = process.env.BASE_URL;
@@ -41,8 +42,10 @@ export function generateFeed(baseUrl: string, limit: number) {
 						const html = fs.readFileSync(path.join(postPath, "index.html"), { encoding: "utf8" });
 						const $ = load(html);
 						const img = $("img[featured]").attr("src");
+						const summary = $(".p-summary").text();
 						feed.addItem({
 							title: $("title").text(),
+							description: summary,
 							id: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
 							link: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
 							date,
@@ -68,7 +71,13 @@ export function generatePostArray(limit = 0) {
 		const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
 		const day = item.date.getDate().toString().padStart(2, "0");
 		const post = item.id?.split("/").pop();
-		return { title: `${item.title}`, date: `${year}/${month}/${day}`, url: `/p/${year}/${month}/${day}/${post}`, visits: post ? getVisit(year, month, day, post) : 0 };
+		return {
+			title: `${item.title}`,
+			summary: item.description,
+			date: `${year}/${month}/${day}`,
+			url: `/p/${year}/${month}/${day}/${post}`,
+			visits: post ? getVisit(year, month, day, post) : 0
+		} as Post;
 	});
 }
 

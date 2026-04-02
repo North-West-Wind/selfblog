@@ -1,6 +1,5 @@
 import renderToString from "preact-render-to-string";
 import NavApp from "./client/pages/NavApp";
-import AllPostsComponent from "./client/components/AllPosts";
 import App from "./client/App";
 import { Post } from "./types";
 import { Base64 } from "js-base64";
@@ -16,16 +15,6 @@ let cachedIndexPosts: Post[] = [];
 
 function renderNavBarToString() {
 	navBarCache = renderToString(<NavApp />);
-}
-
-export function renderListPage(html: string, posts: Post[]) {
-	if (!navBarCache) renderNavBarToString();
-	if (listCache && isSamePosts(cachedListPosts, posts)) return listCache;
-	cachedListPosts = posts;
-	html = html.replace("{server-data}", Base64.encode(JSON.stringify(posts)));
-	html = html.replace("<!--app-nav-->", navBarCache);
-	html = html.replace("<!--app-html-->", renderToString(<AllPostsComponent posts={posts} />));
-	return listCache = html;
 }
 
 function validateIndexCache(latest: string, posts: Post[]) {

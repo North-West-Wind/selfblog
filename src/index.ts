@@ -7,7 +7,7 @@ import * as path from "path";
 import { checkAuth, generateFeed, generateLatest, generatePostArray } from "./util";
 import compression from "compression";
 import sirv from "sirv";
-import { renderIndexPage, renderListPage } from "./ssr";
+import { renderIndexPage } from "./ssr";
 import multer from "multer";
 import { incrementVisit } from "./db";
 
@@ -208,13 +208,8 @@ app.get("/delete/:year/:month/:day/:post", (_req, res) => {
 });
 
 const HTML = {
-	list: fs.readFileSync("./public/list.html", "utf8"),
 	index: fs.readFileSync("./public/index.html", "utf8"),
 }
-
-app.get("/list", (_req, res) => {
-	res.send(renderListPage(HTML.list, generatePostArray()));
-});
 
 app.get("/", (_req, res) => {
 	res.send(renderIndexPage(HTML.index, generateLatest(), generatePostArray(10)));
