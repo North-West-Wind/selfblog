@@ -9,7 +9,7 @@ const USERNAME = process.env.AP_USERNAME;
 const DISPLAYNAME = process.env.AP_DISPLAYNAME;
 const SUMMARY = process.env.AP_SUMMARY;
 
-const db = new Database("data/activitypub.db");
+const db = new Database("data/fedify.db");
 const federation = createFederation<void>({
 	kv: new SqliteKvStore(db)
 });
