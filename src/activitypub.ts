@@ -21,10 +21,11 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 		summary: SUMMARY,
 		preferredUsername: id,
 		url: new URL("/", ctx.url),
+		icon: new URL("/icon.gif"),
 		inbox: ctx.getInboxUri(id),
 		publicKeys: (await ctx.getActorKeyPairs(id)).map(pair => pair.cryptographicKey)
 	});
-}).setKeyPairsDispatcher(async (ctx, id) => {
+}).setKeyPairsDispatcher(async (_ctx, id) => {
 	if (id != USERNAME) return [];
 	const entry = await kv.get<{ privateKey: JsonWebKey, publicKey: JsonWebKey }>(["key"]);
 	if (!entry?.privateKey || !entry.publicKey) {
@@ -37,8 +38,8 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 	return [{ privateKey, publicKey }];
 });
 
-
-federation.setInboxListeners("/users/{identifier}/inbox", "/inbox")
+federation
+	.setInboxListeners("/users/{identifier}/inbox", "/inbox")
 	.on(Follow, async (ctx, follow) => {
 		if (follow.id == null || follow.actorId == null || follow.objectId == null) return;
 		const parsed = ctx.parseUri(follow.objectId);
@@ -62,7 +63,9 @@ federation.setInboxListeners("/users/{identifier}/inbox", "/inbox")
 	});
 
 app.set("trust proxy", true);
-app.use(integrateFederation(federation, () => undefined));
+app.use(integrateFederation(federation, (req) => {
+	console.log("Request!!!", req.path);
+}));
 
 app.get("/api/followers", async (_req, res) => {
 	const list: string[] = [];
