@@ -21,7 +21,7 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 		summary: SUMMARY,
 		preferredUsername: id,
 		url: new URL("/", ctx.url),
-		icon: new URL("/icon.gif"),
+		icon: new URL("/assets/icon.gif"),
 		inbox: ctx.getInboxUri(id),
 		publicKeys: (await ctx.getActorKeyPairs(id)).map(pair => pair.cryptographicKey)
 	});
