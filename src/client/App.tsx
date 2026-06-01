@@ -30,8 +30,8 @@ const App = (props: { latest?: string, posts?: Post[] }) => {
 					<h1>NorthWestBlog</h1>
 					{vertical && <div class="button mini stamp" onClick={openStamp}>Stamp!</div>}
 				</div>
-				<h3>The blogging site of NorthWestWind.</h3>
-				<h3>I wrote this in 3 days.</h3>
+				<h3>The blogging site of NorthWestWind</h3>
+				<h3>I wrote this in 3 days (without AI)</h3>
 				{!vertical && <div class="button mini stamp" onClick={openStamp}>Stamp!</div>}
 			</div>
 			{!vertical && <div className="flex vcenter" style={{ marginLeft: "auto", marginTop: "4vw" }}>
