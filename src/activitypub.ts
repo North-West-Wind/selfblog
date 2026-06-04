@@ -1,15 +1,15 @@
 import { app } from ".";
 import { integrateFederation } from "@fedify/express";
-import { createFederation, exportJwk, generateCryptoKeyPair, importJwk, MemoryKvStore } from "@fedify/fedify";
+import { createFederation, exportJwk, generateCryptoKeyPair, importJwk } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
 import { Accept, Follow, Person, Undo } from "@fedify/vocab";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 
 const USERNAME = process.env.AP_USERNAME;
 const DISPLAYNAME = process.env.AP_DISPLAYNAME;
 const SUMMARY = process.env.AP_SUMMARY;
 
-const db = new Database("data/fedify.db");
+const db = new DatabaseSync("data/fedify.db");
 const kv = new SqliteKvStore(db);
 const federation = createFederation<void>({ kv });
 
