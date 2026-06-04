@@ -67,11 +67,6 @@ federation
 	});
 
 app.set("trust proxy", true);
-app.use("/users/nw", json({ type: ["application/activity+json"] }), (req, _res, next) => {
-	console.log(`${req.method} ${req.path}`);
-	console.log("Body:", req.body);
-	next();
-});
 app.use(integrateFederation(federation, () => void 0));
 
 app.get("/api/followers", async (_req, res) => {
