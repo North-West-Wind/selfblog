@@ -16,11 +16,14 @@ if (!fs.existsSync("data")) fs.mkdirSync("data");
 const app = express();
 export { app };
 
+import("./activitypub");
+
 app.use(compression());
 app.use("/", sirv("./public", { extensions: [], dev: !!process.env.DEBUG }));
 app.use(express.json({
 	type: ["application/json", "application/activity+json", "application/ld+json"]
 }));
+
 app.use(multer({ dest: "data/" }).single("file"));
 app.use((req, res, next) => {
 	if (req.method != "GET" || req.path.startsWith("/api/edit")) {
@@ -218,8 +221,6 @@ const HTML = {
 app.get("/", (_req, res) => {
 	res.send(renderIndexPage(HTML.index, generateLatest(), generatePostArray(10)));
 });
-
-import("./activitypub");
 
 const server = app.listen(process.env.PORT || 3000, () => {
 	console.log(`App listening on port ${(<AddressInfo>server.address()).port}`);

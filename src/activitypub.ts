@@ -1,9 +1,9 @@
 import { app } from ".";
 import { integrateFederation } from "@fedify/express";
-import { createFederation, exportJwk, generateCryptoKeyPair, importJwk } from "@fedify/fedify";
-import Database from "better-sqlite3";
+import { createFederation, exportJwk, generateCryptoKeyPair, importJwk, MemoryKvStore } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
 import { Accept, Follow, Person, Undo } from "@fedify/vocab";
+import Database from "better-sqlite3";
 
 const USERNAME = process.env.AP_USERNAME;
 const DISPLAYNAME = process.env.AP_DISPLAYNAME;
@@ -38,12 +38,14 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 });
 
 federation
-	.setInboxListeners("/users/{identifier}/inbox", "/inbox")
+	.setInboxListeners("/users/{identifier}/inbox")
 	.on(Follow, async (ctx, follow) => {
+		console.log(follow);
 		if (follow.id == null || follow.actorId == null || follow.objectId == null) return;
 		const parsed = ctx.parseUri(follow.objectId);
 		if (parsed?.type !== "actor" || parsed.identifier !== USERNAME) return;
 		const follower = await follow.getActor(ctx);
+		console.debug(follower);
 		if (follower == null) return;
 		await ctx.sendActivity({ identifier: parsed.identifier }, follower, new Accept({ actor: follow.objectId, object: follow }));
 		console.log(follow.actorId.href);
@@ -59,12 +61,12 @@ federation
 		await ctx.sendActivity({ identifier: parsed.identifier }, undoer, new Accept({ actor: undo.objectId, object: undo }));
 		console.log(undo.actorId.href);
 		await kv.delete(["followers", undo.actorId.href]);
+	}).onError((ctx, err) => {
+		console.error("Error in inbox listener:", err);
 	});
 
 app.set("trust proxy", true);
-app.use(integrateFederation(federation, (req) => {
-	console.log("Request!!!", req.path);
-}));
+app.use("/", integrateFederation(federation, () => void 0));
 
 app.get("/api/followers", async (_req, res) => {
 	const list: string[] = [];
