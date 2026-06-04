@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import * as crypto from "crypto";
 import { invalidatePostCache } from "./ssr";
 
@@ -12,8 +12,8 @@ let data = new Map<string, { visits: number, changed: boolean }>();
 const queue: string[] = [];
 
 (async () => {
-	const db = new Database("data/visits.db");
-	db.pragma('journal_mode = WAL');
+	const db = new DatabaseSync("data/visits.db");
+	db.exec("PRAGMA journal_mode = WAL");
 	db.exec(`CREATE TABLE IF NOT EXISTS posts (hashId CHARACTER(40) NOT NULL PRIMARY KEY, visits UNSIGNED BIG INT NOT NULL);`);
 
 	const posts = db.prepare(`SELECT * FROM posts`).all() as Post[];

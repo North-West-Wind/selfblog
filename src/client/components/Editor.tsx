@@ -1,7 +1,6 @@
 import { Editor, useMonaco } from "@monaco-editor/react";
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { timeHash } from "../helper";
 
 let code = "";

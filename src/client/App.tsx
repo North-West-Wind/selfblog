@@ -1,4 +1,4 @@
-import { Post } from "src/types";
+import { Post } from "../types";
 import LatestPostComponent from "./components/LatestPost";
 import MorePostsComponent from "./components/MorePosts";
 import useVertical from "./hooks/useVertical";

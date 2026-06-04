@@ -1,6 +1,6 @@
 import { abbreviateNumber } from "js-abbreviation-number";
 import { useEffect, useState } from "preact/hooks";
-import { Post } from "src/types";
+import { Post } from "../../types";
 
 const MorePostsComponent = (props: { posts?: Post[] }) => {
 	const [posts, setPosts] = useState<Post[] | undefined>(props.posts);
