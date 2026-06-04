@@ -2,6 +2,7 @@ import { Editor, useMonaco } from "@monaco-editor/react";
 import React, { useEffect, useRef, useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import { timeHash } from "../helper";
+import { Base64 } from "js-base64";
 
 let code = "";
 let password = "";
@@ -213,11 +214,10 @@ export default function EditorComponent() {
 		const files = fileSelect.current?.files;
 		if (!files?.length) return;
 		const data = await Promise.all(Array.from(files).map(async file => {
-			const bytes = await file.bytes();
-			let binary = "";
-		  for (let ii = 0; ii < bytes.byteLength; ii++)
-		    binary += String.fromCharCode(bytes[ii]);
-			return { name: file.name, data: btoa(binary) };
+			return {
+				name: file.name,
+				data: Base64.fromUint8Array(await file.bytes())
+			};
 		}));
 		toast.promise(new Promise<void>((resolve, reject) => {
 			fetch(`/api${window.location.pathname}/upload`, {

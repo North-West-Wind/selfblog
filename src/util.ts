@@ -5,7 +5,14 @@ import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";
 import { getVisit } from "./db";
-import { Post } from "./types";
+
+export type Post = {
+	title: string,
+	summary?: string,
+	date: string,
+	url: string,
+	visits: number,
+}
 
 export function generateFeed(baseUrl: string, limit: number) {
 	if (process.env.BASE_URL) baseUrl = process.env.BASE_URL;
