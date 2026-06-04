@@ -8,7 +8,6 @@ import { checkAuth, generateFeed, generateLatest, generatePostArray } from "./ut
 import compression from "compression";
 import sirv from "sirv";
 import { renderIndexPage } from "./ssr";
-import multer from "multer";
 import { incrementVisit } from "./db";
 
 if (!fs.existsSync("data")) fs.mkdirSync("data");
@@ -20,13 +19,10 @@ import("./activitypub");
 
 app.use(compression());
 app.use("/", sirv("./public", { extensions: [], dev: !!process.env.DEBUG }));
-app.use(express.json({
-	type: ["application/json", "application/activity+json", "application/ld+json"]
-}));
+app.use("/api", express.json());
 
-app.use(multer({ dest: "data/" }).single("file"));
-app.use((req, res, next) => {
-	if (req.method != "GET" || req.path.startsWith("/api/edit")) {
+app.use("/api/edit", (req, res, next) => {
+	if (req.method != "GET") {
 		const auth = checkAuth(req);
 		if (auth != 200) {
 			res.sendStatus(auth);
@@ -124,15 +120,23 @@ app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
-	if (!req.file) {
+	const files = req.body as { name: string, data: string }[];
+	if (!files.length) {
 		res.sendStatus(400);
 		return;
 	}
-	const uploaded = <Express.Multer.File> req.file;
-	fs.rename(uploaded.path, path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, uploaded.originalname), err => {
-		if (err) return res.sendStatus(500);
-		res.sendStatus(200);
-	});
+	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	// Check if overwrite
+	for (const file of files) {
+		if (fs.existsSync(path.join(dir, file.name))) {
+			res.sendStatus(400);
+			return;
+		}
+	}
+	// Write files
+	for (const file of files)
+		fs.writeFileSync(path.join(dir, file.name), file.data, "base64");
+	res.sendStatus(200);
 });
 
 app.get("/api/edit/:year/:month/:day/:post/:file", (req, res) => {

@@ -1,5 +1,5 @@
 import { Editor, useMonaco } from "@monaco-editor/react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import { timeHash } from "../helper";
 
@@ -11,6 +11,7 @@ export default function EditorComponent() {
 	const [files, setFiles] = useState<{ name: string, type: "txt" | "bin" }[]>([]);
 	const [hashed, setHashed] = useState("");
 	const monaco = useMonaco();
+	const fileSelect = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		monaco?.languages.typescript.javascriptDefaults.setEagerModelSync(true);
@@ -207,6 +208,35 @@ export default function EditorComponent() {
 			});
 		}
 	}
+	
+	const uploadFile = async () => {
+		const files = fileSelect.current?.files;
+		if (!files?.length) return;
+		const data = await Promise.all(Array.from(files).map(async file => {
+			const bytes = await file.bytes();
+			let binary = "";
+		  for (let ii = 0; ii < bytes.byteLength; ii++)
+		    binary += String.fromCharCode(bytes[ii]);
+			return { name: file.name, data: btoa(binary) };
+		}));
+		toast.promise(new Promise<void>((resolve, reject) => {
+			fetch(`/api${window.location.pathname}/upload`, {
+				method: "POST",
+				headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
+				body: JSON.stringify(data)
+			}).then(res => {
+				if (res.ok) {
+					reload();
+					fileSelect.current!.value = "";
+					resolve();
+				} else reject();
+			});
+		}), {
+			pending: "Uploading...",
+			success: "File(s) uploaded!",
+			error: "Failed to upload file(s)!"
+		});
+	};
 
 	return <div className="flex" style={{ position: "fixed", top: 0, left: 0 }}>
 		<div style={{ width: "20%", padding: "1vw" }}>
@@ -242,16 +272,12 @@ export default function EditorComponent() {
 				<div className="button flex-child" onClick={() => reload()}>Reload</div>
 			</div>
 			<iframe name="useless" style={{ display: "none" }}></iframe>
-			<form id="upload" action={`/api${window.location.pathname}/upload`} method="post" encType="multipart/form-data" className="flex" target="useless" onSubmit={() => toast("File submitted! Try reloading.")}>
-				{/* Hidden input field for sending password as POST body parsed by multer */}
-				<input class="hidden" value={hashed} name="password" />
-				<div>
-				  <div className="flex"><input id="file" name="file" type="file" /></div>
-					<div className="flex" style={{ marginTop: "1vh" }}>
-				  	<button className="button" style={{ border: "none", width: "100%" }}>Upload</button>
-					</div>
+			<div>
+			  <div className="flex"><input name="file" type="file" multiple ref={fileSelect} /></div>
+				<div className="flex" style={{ marginTop: "1vh" }}>
+			  	<button className="button" style={{ border: "none", width: "100%" }} onClick={uploadFile}>Upload</button>
 				</div>
-			</form>
+			</div>
 		</div>
 		<Editor
 			language={ext || "txt"}
