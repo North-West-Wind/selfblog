@@ -3,6 +3,7 @@ import { integrateFederation } from "@fedify/express";
 import { createFederation, exportJwk, generateCryptoKeyPair, importJwk } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
 import { Accept, Follow, Person, Undo } from "@fedify/vocab";
+import { json } from "express";
 import { DatabaseSync } from "node:sqlite";
 
 const USERNAME = process.env.AP_USERNAME;
@@ -66,7 +67,7 @@ federation
 	});
 
 app.set("trust proxy", true);
-app.use("/users/nw", (req, _res, next) => {
+app.use("/users/nw", json({ type: ["application/activity+json"] }), (req, _res, next) => {
 	console.log(`${req.method} ${req.path}`);
 	console.log("Body:", req.body);
 	next();
