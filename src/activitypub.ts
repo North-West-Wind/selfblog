@@ -61,12 +61,17 @@ federation
 		await ctx.sendActivity({ identifier: parsed.identifier }, undoer, new Accept({ actor: undo.objectId, object: undo }));
 		console.log(undo.actorId.href);
 		await kv.delete(["followers", undo.actorId.href]);
-	}).onError((ctx, err) => {
+	}).onError((_ctx, err) => {
 		console.error("Error in inbox listener:", err);
 	});
 
 app.set("trust proxy", true);
-app.use("/", integrateFederation(federation, () => void 0));
+app.use("/users/nw", (req, _res, next) => {
+	console.log(`${req.method} ${req.path}`);
+	console.log("Body:", req.body);
+	next();
+});
+app.use(integrateFederation(federation, () => void 0));
 
 app.get("/api/followers", async (_req, res) => {
 	const list: string[] = [];
