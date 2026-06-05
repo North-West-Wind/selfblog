@@ -238,6 +238,27 @@ export default function EditorComponent() {
 		});
 	};
 
+	const publish = async () => {
+		if (files.every(({ name }) => name != ".hidden")) return toast.warn("Already published");
+		if (!confirm("Are you sure you want to publish this blog post?")) return;
+		
+		toast.promise(new Promise<void>((resolve, reject) => {
+			fetch(`/api${window.location.pathname}/publish`, {
+				method: "POST",
+				headers: { Authorization: timeHash(password), "Content-Type": "application/json" }
+			}).then(res => {
+				if (res.ok) {
+					reload();
+					resolve();
+				} else reject();
+			});
+		}), {
+			pending: "Publishing...",
+			success: "Published!",
+			error: "Failed to publish post!"
+		});
+	};
+
 	return <div className="flex" style={{ position: "fixed", top: 0, left: 0 }}>
 		<div style={{ width: "20%", padding: "1vw" }}>
 			<div className="flex"><input
@@ -277,6 +298,9 @@ export default function EditorComponent() {
 				<div className="flex" style={{ marginTop: "1vh" }}>
 			  	<button className="button" style={{ border: "none", width: "100%" }} onClick={uploadFile}>Upload</button>
 				</div>
+			</div>
+			<div className="flex">
+				<div className="button flex-child" onClick={publish} class={files.every(({ name }) => name != ".hidden") ? "" : "hidden"}>Publish</div>
 			</div>
 		</div>
 		<Editor

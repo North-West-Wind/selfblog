@@ -1,8 +1,8 @@
 import { app } from ".";
 import { integrateFederation } from "@fedify/express";
-import { createFederation, exportJwk, generateCryptoKeyPair, importJwk, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
+import { Context, createFederation, exportJwk, generateCryptoKeyPair, importJwk, InboxContext, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
-import { Accept, Article, Create, Delete, Follow, Image, Person, PUBLIC_COLLECTION, Undo, Update } from "@fedify/vocab";
+import { Accept, Article, Create, Delete, Follow, Image, Person, PUBLIC_COLLECTION, Recipient, Undo, Update } from "@fedify/vocab";
 import { DatabaseSync } from "node:sqlite";
 import { DBPost, postIterator } from "./util";
 import * as crypto from "crypto";
@@ -79,7 +79,13 @@ federation
 		if (follower == null || follower.id == null || follower.inboxId == null) return;
 		await ctx.sendActivity({ identifier: parsed.identifier }, follower, new Accept({ actor: follow.objectId, object: follow }));
 		console.log(`${follower.name} followed`);
-		await kv.set(["followers", follower.id.href], follower.inboxId.href);
+
+		// Backfill if necessary
+		if (!(await kv.get(["followers", follower.id.host])))
+			await backfill(ctx, [follower]);
+
+		// Store follower
+		await kv.set(["followers", follower.id.host, follower.id.href], follower.inboxId.href);
 	})
 	.on(Undo, async (ctx, undo) => {
 		const object = await undo.getObject();
@@ -90,7 +96,7 @@ federation
 		if (undoer == null) return;
 		await ctx.sendActivity({ identifier: parsed.identifier }, undoer, new Accept({ actor: undo.objectId, object: undo }));
 		console.log(`${undoer.name} unfollowed`);
-		await kv.delete(["followers", undo.actorId.href]);
+		await kv.delete(["followers", undo.actorId.host, undo.actorId.href]);
 	}).onError((_ctx, err) => {
 		console.error("Error in inbox listener:", err);
 	});
@@ -99,7 +105,7 @@ federation.setFollowersDispatcher("/users/{identifier}/followers", async (_ctx, 
 	if (id !== USERNAME) return null;
 	const items: { id: URL, inboxId: URL }[] = [];
 	for await (const { key, value } of kv.list(["followers"]))
-		items.push({ id: new URL(key[1]!), inboxId: new URL(value as string) });
+		items.push({ id: new URL(key[2]!), inboxId: new URL(value as string) });
 	return { items };
 });
 
@@ -116,88 +122,98 @@ federation.setOutboxDispatcher("/users/{identifier}/outbox", async (ctx, id) => 
 	return { items };
 });
 
-// Slug format: <year>-<month>-<day>-<slug>
 federation.setObjectDispatcher(Article, "/posts/{slug}", async (ctx, { slug }) => {
-	const args = slug.split("-");
-	if (args.length < 4) return null;
-	const year = parseInt(args.shift()!);
-	const month = parseInt(args.shift()!);
-	const day = parseInt(args.shift()!);
-	slug = args.join("-");
 	for (const { dir, date, post } of postIterator()) {
-		if (date.getFullYear() != year || date.getMonth() + 1 != month || date.getDate() != day || slug != post) continue;
+		const idFile = path.join(dir, ".federation");
+		if (!fs.existsSync(idFile) || fs.readFileSync(idFile, "utf8") != slug) continue;
 		return postToArticle(ctx, { dir, date, post });
 	}
 	return null;
 });
 
-function postToArticle(ctx: RequestContext<unknown>, post: { dir: string, date: Date, post: string }) {
+function postToArticle(ctx: Context<unknown>, post: { dir: string, date: Date, post: string }) {
 	const year = post.date.getFullYear();
 	const month = (post.date.getMonth() + 1).toString().padStart(2, "0");
 	const day = post.date.getDate().toString().padStart(2, "0");
 	const html = fs.readFileSync(path.join(post.dir, "index.html"), { encoding: "utf8" });
 	const $ = load(html);
+
+	const idFile = path.join(post.dir, ".federation");
+	let id = "";
+	if (fs.existsSync(idFile))
+		id = fs.readFileSync(idFile, "utf8");
+	if (!id) {
+		id = crypto.randomUUID();
+		fs.writeFileSync(idFile, id);
+	}
+	let summary = ($(".p-summary").text() || $("p:first").text()).replace(/\s+/g, " ").replace(/\n/g, " ").trim();
+	if (!summary.endsWith(".")) summary += "...";
+	else if (summary.endsWith(".") && !summary.endsWith("...")) summary += "..";
+	const actorUri = ctx.getActorUri(USERNAME);
 	return new Article({
-		id: ctx.getObjectUri(Article, { slug: `${year}-${month}-${day}-${post.post}` }),
+		id: ctx.getObjectUri(Article, { slug: id }),
 		attribution: ctx.getActorUri(USERNAME!),
 		name: $("title").text(),
-		summary: $(".p-summary").text(),
-		content: $(".e-content").text() || $("body").remove("div#nav").text(),
-		url: new URL(`/p/${year}/${month}/${day}/${post.post}`, ctx.url),
-		published: Temporal.Instant.from(post.date.toISOString()),
-		updated: Temporal.Instant.from(fs.statSync(path.join(post.dir, "index.html")).mtime.toISOString())
+		summary,
+		content: $(".e-content").html() || $("body").remove("div#nav").html(),
+		mediaType: "text/html",
+		url: new URL(`/p/${year}/${month}/${day}/${post.post}`, actorUri.protocol + "//" + actorUri.host),
+		published: Temporal.Instant.from(post.date.toISOString())
 	});
 }
 
-export async function startupSync(ctx: RequestContext<unknown>) {
+export async function sync(ctx: Request | RequestContext<unknown>) {
+	if (ctx instanceof Request) ctx = federation.createContext(ctx);
 	console.log("Federating posts...");
   const actorUri = ctx.getActorUri(USERNAME);
 	const stored = new Map<string, DBPost>();
-	console.log("Collecting posts from database...");
 	for await (const { value } of kv.list(["posts"])) {
 		const post = value as DBPost;
 		stored.set(post.id, post);
-		console.log(`- ${post.id}`);
 	}
+	console.log("Collected %d posts from database", stored.size);
 
 	console.log("Processing current posts...");
 	const currentPosts = new Set<string>();
 	for (const { dir, date, post } of postIterator({ ascending: true })) {
-		const slug = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}-${post}`;
-		currentPosts.add(slug);
 		const article = postToArticle(ctx, { dir, date, post });
+		const id = article.id!.href;
+		currentPosts.add(id);
 		const hash = crypto.hash("sha256", `${article.summary || ""}\n${article.content}`);
-		if (!stored.has(slug)) {
-			console.log(`Creating post ${slug}...`);
+		if (!stored.has(id)) {
+			console.log(`Creating post ${id}...`);
 			await ctx.sendActivity({ identifier: USERNAME }, "followers", new Create({
 				id: new URL(`#create-${Date.now()}`, article.id!),
 				actor: actorUri,
 				to: PUBLIC_COLLECTION,
-				object: article
+				object: article,
+				published: article.published
 			}));
-			kv.set(["posts", slug], { id: slug, hash, url: article.id!.href! } as DBPost);
-		} else if (stored.get(slug)?.hash !== hash) {
-			console.log(`Updating post ${slug}...`);
+			kv.set(["posts", id], { id, hash, url: article.id!.href! } as DBPost);
+		} else if (stored.get(id)?.hash !== hash) {
+			console.log(`Updating post ${id}...`);
+			const patched = new Article({ ...article, updated: Temporal.Now.instant() });
 			await ctx.sendActivity({ identifier: USERNAME }, "followers", new Update({
 				id: new URL(`#update-${Date.now()}`, article.id!),
 				actor: actorUri,
 				to: PUBLIC_COLLECTION,
-				object: article
+				object: patched,
+				published: Temporal.Now.instant()
 			}));
-			kv.set(["posts", slug], { id: slug, hash, url: article.id!.href } as DBPost);
+			kv.set(["posts", id], { id, hash, url: article.id!.href } as DBPost);
 		}
 	}
 
-	for (const [slug, post] of stored) {
-		if (!currentPosts.has(slug)) {
-			console.log(`Deleting post ${slug}...`);
+	for (const [id, post] of stored) {
+		if (!currentPosts.has(id)) {
+			console.log(`Deleting post ${id}...`);
 			await ctx.sendActivity({ identifier: USERNAME }, "followers", new Delete({
 				id: new URL(`#delete-${Date.now()}`, actorUri),
 				actor: actorUri,
 				to: PUBLIC_COLLECTION,
 				object: new URL(post.url)
 			}));
-			kv.delete(["posts", slug]);
+			kv.delete(["posts", id]);
 		}
 	}
 
@@ -222,6 +238,21 @@ export async function startupSync(ctx: RequestContext<unknown>) {
 	console.log("Federation finished!");
 }
 
+async function backfill(ctx: Context<unknown>, recipients: Recipient[]) {
+  const actorUri = ctx.getActorUri(USERNAME);
+	for (const { dir, date, post } of postIterator({ ascending: true })) {
+		const article = postToArticle(ctx, { dir, date, post });
+		console.log(`Creating post ${article.id!.href}...`);
+		await ctx.sendActivity({ identifier: USERNAME }, recipients, new Create({
+			id: new URL(`#create-${Date.now()}`, article.id!),
+			actor: actorUri,
+			to: PUBLIC_COLLECTION,
+			object: article,
+			published: article.published
+		}));	
+	}
+}
+
 let synced = false;
 app.set("trust proxy", true);
 app.use(integrateFederation(federation, (req) => {
@@ -232,8 +263,7 @@ app.use(integrateFederation(federation, (req) => {
 	req = new Request(url.toString(), req as unknown as Request) as unknown as typeof req;
 	if (!synced) {
 		synced = true;
-		const ctx = federation.createContext(req as unknown as Request);
-		startupSync(ctx).catch(err => {
+		sync(req as unknown as Request).catch(err => {
 			console.error("Failed to sync posts:", err);
 			synced = false;
 		});

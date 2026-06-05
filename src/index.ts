@@ -15,7 +15,7 @@ if (!fs.existsSync("data")) fs.mkdirSync("data");
 const app = express();
 export { app };
 
-import("./activitypub");
+const ap = import("./activitypub");
 
 app.use(compression());
 app.use("/", sirv("./public", { extensions: [], dev: !!process.env.DEBUG }));
@@ -137,6 +137,18 @@ app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
 	for (const file of files)
 		fs.writeFileSync(path.join(dir, file.name), file.data, "base64");
 	res.sendStatus(200);
+});
+
+app.post("/api/edit/:year/:month/:day/:post/publish", (req, res) => {
+	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	const hiddenFile = path.join(dir, ".hidden");
+	if (!fs.existsSync(hiddenFile)) {
+		res.sendStatus(404);
+		return;
+	}
+	fs.rmSync(hiddenFile);
+	res.sendStatus(200);
+	ap.then(({ sync }) => sync(req as unknown as Request)).catch(err => console.error("Failed to sync posts:", err));
 });
 
 app.get("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
