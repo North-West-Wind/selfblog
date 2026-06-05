@@ -21,6 +21,7 @@
     "@fedify/fedify": "^2.2.3",
     "@fedify/sqlite": "^2.2.3",
     "@fedify/vocab": "^2.2.3",
+    "@js-temporal/polyfill": "^0.5.1",
     "@monaco-editor/react": "^4.7.0",
     "@numbered/feed": "^4.2.8",
     "bcryptjs": "^3.0.3",

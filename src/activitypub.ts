@@ -1,56 +1,85 @@
 import { app } from ".";
 import { integrateFederation } from "@fedify/express";
-import { createFederation, exportJwk, generateCryptoKeyPair, importJwk } from "@fedify/fedify";
+import { createFederation, exportJwk, generateCryptoKeyPair, importJwk, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
-import { Accept, Follow, Person, Undo } from "@fedify/vocab";
-import { json } from "express";
+import { Accept, Article, Create, Delete, Follow, Image, Person, PUBLIC_COLLECTION, Undo, Update } from "@fedify/vocab";
 import { DatabaseSync } from "node:sqlite";
+import { DBPost, postIterator } from "./util";
+import * as crypto from "crypto";
+import * as fs from "fs";
+import * as path from "path";
+import { load } from "cheerio";
+import { Temporal } from "@js-temporal/polyfill";
+import { configure, getConsoleSink } from "@logtape/logtape";
 
-const USERNAME = process.env.AP_USERNAME;
+const USERNAME = process.env.AP_USERNAME!;
 const DISPLAYNAME = process.env.AP_DISPLAYNAME;
 const SUMMARY = process.env.AP_SUMMARY;
 
+configure({
+  sinks: { console: getConsoleSink() },
+  filters: {},
+  loggers: [
+    { category: "fedify",  sinks: ["console"], lowestLevel: "info" },
+    { category: ["logtape", "meta"],  sinks: ["console"], lowestLevel: "error" },
+  ],
+});
+
 const db = new DatabaseSync("data/fedify.db");
 const kv = new SqliteKvStore(db);
-const federation = createFederation<void>({ kv });
+const federation = createFederation<void>({ kv, queue: new InProcessMessageQueue() });
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 	if (id !== USERNAME) return null;
+	const keyPairs = await ctx.getActorKeyPairs(id);
 	return new Person({
 		id: ctx.getActorUri(id),
 		name: DISPLAYNAME,
+		icon: new Image({
+			url: new URL("/assets/icon.gif", ctx.url),
+			mediaType: "image/gif"
+		}),
 		summary: SUMMARY,
 		preferredUsername: id,
 		url: new URL("/", ctx.url),
 		inbox: ctx.getInboxUri(id),
-		publicKeys: (await ctx.getActorKeyPairs(id)).map(pair => pair.cryptographicKey)
+		outbox: ctx.getOutboxUri(id),
+		followers: ctx.getFollowersUri(id),
+		publicKey: keyPairs[0].cryptographicKey,
+		assertionMethods: keyPairs.map(key => key.multikey)
 	});
 }).setKeyPairsDispatcher(async (_ctx, id) => {
 	if (id != USERNAME) return [];
-	const entry = await kv.get<{ privateKey: JsonWebKey, publicKey: JsonWebKey }>(["key"]);
-	if (!entry?.privateKey || !entry.publicKey) {
-		const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
-		await kv.set(["key"], { privateKey: await exportJwk(privateKey), publicKey: await exportJwk(publicKey) });
-		return [{ privateKey, publicKey }];
-	}
-	const privateKey = await importJwk(entry.privateKey, "private");
-	const publicKey = await importJwk(entry.publicKey, "public");
-	return [{ privateKey, publicKey }];
+	const entry = await kv.get<{ [key in "rsa" | "ed25519"]: { privateKey: JsonWebKey, publicKey: JsonWebKey }}>(["key"]);
+	if (entry) return [{
+		privateKey: await importJwk(entry.rsa.privateKey, "private"),
+		publicKey: await importJwk(entry.rsa.publicKey, "public")
+	}, {
+		privateKey: await importJwk(entry.ed25519.privateKey, "private"),
+		publicKey: await importJwk(entry.ed25519.publicKey, "public")
+	}];
+	const [rsa, ed25519] = await Promise.all([generateCryptoKeyPair("RSASSA-PKCS1-v1_5"), generateCryptoKeyPair("Ed25519")]);
+	kv.set(["key"], { rsa: {
+		privateKey: await exportJwk(rsa.privateKey),
+		publicKey: await exportJwk(rsa.publicKey)
+	}, ed25519: {
+		privateKey: await exportJwk(ed25519.privateKey),
+		publicKey: await exportJwk(ed25519.publicKey)
+	}});
+	return [rsa, ed25519];
 });
 
 federation
 	.setInboxListeners("/users/{identifier}/inbox")
 	.on(Follow, async (ctx, follow) => {
-		console.log(follow);
 		if (follow.id == null || follow.actorId == null || follow.objectId == null) return;
 		const parsed = ctx.parseUri(follow.objectId);
 		if (parsed?.type !== "actor" || parsed.identifier !== USERNAME) return;
 		const follower = await follow.getActor(ctx);
-		console.debug(follower);
-		if (follower == null) return;
+		if (follower == null || follower.id == null || follower.inboxId == null) return;
 		await ctx.sendActivity({ identifier: parsed.identifier }, follower, new Accept({ actor: follow.objectId, object: follow }));
-		console.log(follow.actorId.href);
-		await kv.set(["followers", follow.id.href], follow.actorId.href);
+		console.log(`${follower.name} followed`);
+		await kv.set(["followers", follower.id.href], follower.inboxId.href);
 	})
 	.on(Undo, async (ctx, undo) => {
 		const object = await undo.getObject();
@@ -60,18 +89,153 @@ federation
 		const undoer = await undo.getActor(ctx);
 		if (undoer == null) return;
 		await ctx.sendActivity({ identifier: parsed.identifier }, undoer, new Accept({ actor: undo.objectId, object: undo }));
-		console.log(undo.actorId.href);
+		console.log(`${undoer.name} unfollowed`);
 		await kv.delete(["followers", undo.actorId.href]);
 	}).onError((_ctx, err) => {
 		console.error("Error in inbox listener:", err);
 	});
 
-app.set("trust proxy", true);
-app.use(integrateFederation(federation, () => void 0));
-
-app.get("/api/followers", async (_req, res) => {
-	const list: string[] = [];
+federation.setFollowersDispatcher("/users/{identifier}/followers", async (_ctx, id) => {
+	if (id !== USERNAME) return null;
+	const items: { id: URL, inboxId: URL }[] = [];
 	for await (const { key, value } of kv.list(["followers"]))
-		list.push(value as string);
-	res.json(list);
+		items.push({ id: new URL(key[1]!), inboxId: new URL(value as string) });
+	return { items };
 });
+
+federation.setOutboxDispatcher("/users/{identifier}/outbox", async (ctx, id) => {
+	const actorUri = ctx.getActorUri(USERNAME);
+	const items = Array.from(postIterator()).map(post => {
+		const article = postToArticle(ctx, post);
+		return new Create({
+			id: new URL("#activity", article.id!),
+			actor: actorUri,
+			object: article
+		});
+	});
+	return { items };
+});
+
+// Slug format: <year>-<month>-<day>-<slug>
+federation.setObjectDispatcher(Article, "/posts/{slug}", async (ctx, { slug }) => {
+	const args = slug.split("-");
+	if (args.length < 4) return null;
+	const year = parseInt(args.shift()!);
+	const month = parseInt(args.shift()!);
+	const day = parseInt(args.shift()!);
+	slug = args.join("-");
+	for (const { dir, date, post } of postIterator()) {
+		if (date.getFullYear() != year || date.getMonth() + 1 != month || date.getDate() != day || slug != post) continue;
+		return postToArticle(ctx, { dir, date, post });
+	}
+	return null;
+});
+
+function postToArticle(ctx: RequestContext<unknown>, post: { dir: string, date: Date, post: string }) {
+	const year = post.date.getFullYear();
+	const month = (post.date.getMonth() + 1).toString().padStart(2, "0");
+	const day = post.date.getDate().toString().padStart(2, "0");
+	const html = fs.readFileSync(path.join(post.dir, "index.html"), { encoding: "utf8" });
+	const $ = load(html);
+	return new Article({
+		id: ctx.getObjectUri(Article, { slug: `${year}-${month}-${day}-${post.post}` }),
+		attribution: ctx.getActorUri(USERNAME!),
+		name: $("title").text(),
+		summary: $(".p-summary").text(),
+		content: $(".e-content").text() || $("body").remove("div#nav").text(),
+		url: new URL(`/p/${year}/${month}/${day}/${post.post}`, ctx.url),
+		published: Temporal.Instant.from(post.date.toISOString()),
+		updated: Temporal.Instant.from(fs.statSync(path.join(post.dir, "index.html")).mtime.toISOString())
+	});
+}
+
+export async function startupSync(ctx: RequestContext<unknown>) {
+	console.log("Federating posts...");
+  const actorUri = ctx.getActorUri(USERNAME);
+	const stored = new Map<string, DBPost>();
+	console.log("Collecting posts from database...");
+	for await (const { value } of kv.list(["posts"])) {
+		const post = value as DBPost;
+		stored.set(post.id, post);
+		console.log(`- ${post.id}`);
+	}
+
+	console.log("Processing current posts...");
+	const currentPosts = new Set<string>();
+	for (const { dir, date, post } of postIterator({ ascending: true })) {
+		const slug = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}-${post}`;
+		currentPosts.add(slug);
+		const article = postToArticle(ctx, { dir, date, post });
+		const hash = crypto.hash("sha256", `${article.summary || ""}\n${article.content}`);
+		if (!stored.has(slug)) {
+			console.log(`Creating post ${slug}...`);
+			await ctx.sendActivity({ identifier: USERNAME }, "followers", new Create({
+				id: new URL(`#create-${Date.now()}`, article.id!),
+				actor: actorUri,
+				to: PUBLIC_COLLECTION,
+				object: article
+			}));
+			kv.set(["posts", slug], { id: slug, hash, url: article.id!.href! } as DBPost);
+		} else if (stored.get(slug)?.hash !== hash) {
+			console.log(`Updating post ${slug}...`);
+			await ctx.sendActivity({ identifier: USERNAME }, "followers", new Update({
+				id: new URL(`#update-${Date.now()}`, article.id!),
+				actor: actorUri,
+				to: PUBLIC_COLLECTION,
+				object: article
+			}));
+			kv.set(["posts", slug], { id: slug, hash, url: article.id!.href } as DBPost);
+		}
+	}
+
+	for (const [slug, post] of stored) {
+		if (!currentPosts.has(slug)) {
+			console.log(`Deleting post ${slug}...`);
+			await ctx.sendActivity({ identifier: USERNAME }, "followers", new Delete({
+				id: new URL(`#delete-${Date.now()}`, actorUri),
+				actor: actorUri,
+				to: PUBLIC_COLLECTION,
+				object: new URL(post.url)
+			}));
+			kv.delete(["posts", slug]);
+		}
+	}
+
+	console.log("Post federation finished!");
+
+	console.log("Federating profile...");
+	const storedProfile = await kv.get<{ username: string, hash: string }>(["profile"]);
+	const profileHash = crypto.hash("sha256", JSON.stringify(await (await ctx.getActor(USERNAME))?.toJsonLd({ format: "compact", context: {} })));
+	if (!storedProfile) {
+		console.log("Profile not found in database. Performing local update without sync...");
+		kv.set(["profile"], { username: USERNAME, hash: profileHash });
+	} else if (storedProfile.hash !== profileHash) {
+		console.log("Profile hash mismatch! Re-syncing...");
+		await ctx.sendActivity({ identifier: USERNAME }, "followers", new Update({
+			id: new URL(`#update-actor-${Date.now()}`, ctx.getActorUri(storedProfile.username)), // in case I ever change the username
+			actor: ctx.getActorUri(USERNAME),
+			object: await ctx.getActor(USERNAME)
+		}));
+		kv.set(["profile"], { username: USERNAME, hash: profileHash });
+	} else console.log("Profile not updated");
+
+	console.log("Federation finished!");
+}
+
+let synced = false;
+app.set("trust proxy", true);
+app.use(integrateFederation(federation, (req) => {
+	const proto = req.header("x-forwarded-proto");
+	const host = req.header("x-forwarded-host");
+	if (!host || !proto) return;
+	const url = new URL(req.url, `${proto}://${host}`);
+	req = new Request(url.toString(), req as unknown as Request) as unknown as typeof req;
+	if (!synced) {
+		synced = true;
+		const ctx = federation.createContext(req as unknown as Request);
+		startupSync(ctx).catch(err => {
+			console.error("Failed to sync posts:", err);
+			synced = false;
+		});
+	}
+}));

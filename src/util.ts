@@ -14,6 +14,30 @@ export type Post = {
 	visits: number,
 }
 
+export type DBPost = {
+	id: string,
+	hash: string,
+	url: string,
+}
+
+export function* postIterator(options?: { includeHidden?: boolean, ascending?: boolean }) {
+	for (const year of fs.readdirSync("data").filter(dir => fs.statSync(path.join("data", dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString())) {
+		const yearPath = path.join("data", year);
+		for (const month of fs.readdirSync(yearPath).filter(dir => fs.statSync(path.join(yearPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString().padStart(2, "0"))) {
+			const monthPath = path.join(yearPath, month);
+			for (const day of fs.readdirSync(monthPath).filter(dir => fs.statSync(path.join(monthPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString().padStart(2, "0"))) {
+				const dayPath = path.join(monthPath, day);
+				for (const post of fs.readdirSync(dayPath).filter(dir => fs.statSync(path.join(dayPath, dir)).isDirectory()).map(v => ({ name:v, time:fs.statSync(path.join(dayPath, v)).mtime.getTime() })).sort((a, b) => options?.ascending ? a.time - b.time : b.time - a.time).map(v => v.name)) {
+					const postPath = path.join(dayPath, post);
+					if (fs.existsSync(path.join(postPath, ".hidden")) && !options?.includeHidden) continue;
+					const date = new Date(`${year}/${month}/${day}`);
+					yield { dir: postPath, date, post };
+				}
+			}
+		}
+	}
+}
+
 export function generateFeed(baseUrl: string, limit: number) {
 	if (process.env.BASE_URL) baseUrl = process.env.BASE_URL;
 	const feed = new Feed({
@@ -33,59 +57,54 @@ export function generateFeed(baseUrl: string, limit: number) {
 			link: "https://www.northwestw.in"
 		}
 	});
-	for (const year of fs.readdirSync("data").filter(dir => fs.statSync(path.join("data", dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString())) {
-		const yearPath = path.join("data", year);
-		for (const month of fs.readdirSync(yearPath).filter(dir => fs.statSync(path.join(yearPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString().padStart(2, "0"))) {
-			const monthPath = path.join(yearPath, month);
-			for (const day of fs.readdirSync(monthPath).filter(dir => fs.statSync(path.join(monthPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => b - a).map(v => v.toString().padStart(2, "0"))) {
-				const dayPath = path.join(monthPath, day);
-				for (const post of fs.readdirSync(dayPath).filter(dir => fs.statSync(path.join(dayPath, dir)).isDirectory()).map(v => ({ name:v, time:fs.statSync(path.join(dayPath, v)).mtime.getTime() })).sort((a, b) => b.time - a.time).map(v => v.name)) {
-					const postPath = path.join(dayPath, post);
-					if (fs.existsSync(path.join(postPath, ".hidden"))) continue;
-					if (fs.existsSync(path.join(postPath, "index.html"))) {
-						const date = new Date(`${year}/${month}/${day}`);
-						if (!feed.options.updated)
-							feed.options.updated = date;
-						const html = fs.readFileSync(path.join(postPath, "index.html"), { encoding: "utf8" });
-						const $ = load(html);
-						const img = $("img[featured]").attr("src");
-						const summary = $(".p-summary").text();
-						feed.addItem({
-							title: $("title").text(),
-							description: summary,
-							id: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
-							link: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
-							date,
-							image: img ? `${baseUrl}/p/${year}/${month}/${day}/${img}` : undefined,
-							author: [{
-								name: "NorthWestWind",
-								link: "https://www.northwestw.in"
-							}]
-						});
-						if (limit && feed.items.length >= limit) return feed;
-					}
-				}
-			}
-		}
+	for (const { dir, date, post } of postIterator()) {
+		if (!feed.options.updated)
+			feed.options.updated = date;
+		const html = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
+		const $ = load(html);
+		const img = $("img[featured]").attr("src");
+		const summary = $(".p-summary").text();
+		const year = date.getFullYear();
+		const month = date.getMonth() + 1;
+		const day = date.getDate();
+		feed.addItem({
+			title: $("title").text(),
+			description: summary,
+			id: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
+			link: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
+			date,
+			image: img ? `${baseUrl}/p/${year}/${month}/${day}/${img}` : undefined,
+			author: [{
+				name: "NorthWestWind",
+				link: "https://www.northwestw.in"
+			}]
+		});
+		if (limit && feed.items.length >= limit) break;
 	}
 	return feed;
 }
 
 export function generatePostArray(limit = 0) {
-	const feed = generateFeed("", limit);
-	return feed.items.map(item => {
-		const year = item.date.getFullYear();
-		const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
-		const day = item.date.getDate().toString().padStart(2, "0");
-		const post = item.id?.split("/").pop();
-		return {
-			title: `${item.title}`,
-			summary: item.description,
+	const items: Post[] = [];
+	for (const { dir, date, post } of postIterator()) {
+		const year = date.getFullYear();
+		const month = (date.getMonth() + 1).toString().padStart(2, "0");
+		const day = date.getDate().toString().padStart(2, "0");
+
+		const html = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
+		const $ = load(html);
+
+		items.push({
+			title: $("title").text(),
+			summary: $(".p-summary").text(),
 			date: `${year}/${month}/${day}`,
 			url: `/p/${year}/${month}/${day}/${post}`,
 			visits: post ? getVisit(year, month, day, post) : 0
-		} as Post;
-	});
+		} as Post);
+
+		if (limit && items.length >= limit) break;
+	}
+	return items;
 }
 
 export function generateLatest() {
