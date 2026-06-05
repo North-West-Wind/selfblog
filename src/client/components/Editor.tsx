@@ -245,7 +245,7 @@ export default function EditorComponent() {
 		toast.promise(new Promise<void>((resolve, reject) => {
 			fetch(`/api${window.location.pathname}/publish`, {
 				method: "POST",
-				headers: { Authorization: timeHash(password), "Content-Type": "application/json" }
+				headers: { Authorization: timeHash(password) }
 			}).then(res => {
 				if (res.ok) {
 					reload();

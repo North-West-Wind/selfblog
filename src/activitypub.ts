@@ -1,6 +1,6 @@
 import { app } from ".";
 import { integrateFederation } from "@fedify/express";
-import { Context, createFederation, exportJwk, generateCryptoKeyPair, importJwk, InboxContext, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
+import { Context, createFederation, exportJwk, generateCryptoKeyPair, importJwk, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
 import { Accept, Article, Create, Delete, Follow, Image, Person, PUBLIC_COLLECTION, Recipient, Undo, Update } from "@fedify/vocab";
 import { DatabaseSync } from "node:sqlite";

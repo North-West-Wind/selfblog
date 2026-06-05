@@ -21,7 +21,7 @@ app.use(compression());
 app.use("/", sirv("./public", { extensions: [], dev: !!process.env.DEBUG }));
 app.use("/api", express.json());
 
-app.use("/api/edit", (req, res, next) => {
+app.use("/api", (req, res, next) => {
 	if (req.method != "GET") {
 		const auth = checkAuth(req);
 		if (auth != 200) {
@@ -71,7 +71,7 @@ app.post("/api/new", (req, res) => {
 		fs.cpSync(path.join("public", "template.html"), path.join(dir, "index.html"));
 		const content = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
 		fs.writeFileSync(path.join(dir, "index.html"), content
-			.replace("{date}", [date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0")].join("-"))
+			.replace(/{date}/g, `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`)
 			.replace(/{title}/g, req.body.title)
 		);
 		// hidden by default
