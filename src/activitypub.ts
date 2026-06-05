@@ -105,7 +105,7 @@ federation.setFollowersDispatcher("/users/{identifier}/followers", async (_ctx, 
 
 federation.setOutboxDispatcher("/users/{identifier}/outbox", async (ctx, id) => {
 	const actorUri = ctx.getActorUri(USERNAME);
-	const items = Array.from(postIterator()).map(post => {
+	const items = Array.from(postIterator({ ascending: true })).map(post => {
 		const article = postToArticle(ctx, post);
 		return new Create({
 			id: new URL("#activity", article.id!),
