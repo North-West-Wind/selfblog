@@ -81,9 +81,9 @@ export async function updatePostLastSyncByIds(ids: string[]) {
 }
 
 export async function incrementVisit(relDir: string) {
-	const rows = await db.select({ visits: postsTable.visits }).from(postsTable).where(eq(postsTable.path, relDir)).limit(1);
+	const rows = await db.select({ id: postsTable.id, visits: postsTable.visits }).from(postsTable).where(eq(postsTable.path, relDir)).limit(1);
 	if (!rows.length) return;
-	await db.update(postsTable).set({ visits: rows[0].visits + 1 });
+	await db.update(postsTable).set({ visits: rows[0].visits + 1 }).where(eq(postsTable.id, rows[0].id));
 	invalidatePostCache();
 }
 
