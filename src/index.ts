@@ -51,9 +51,9 @@ app.get("/p/:year/:month/:day/:post/:file", (req, res) => {
 	res.sendFile(path.resolve(__dirname, "..", dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file));
 });
 
-app.get("/api/list", (req, res) => {
+app.get("/api/list", async (req, res) => {
 	const limit = parseInt(<string> req.query.limit) || 0;
-	res.json(generatePostArray(limit));
+	res.json(await generatePostArray(limit));
 });
 
 app.post("/api/new", (req, res) => {
@@ -247,7 +247,7 @@ const HTML = {
 }
 
 app.get("/", async (_req, res) => {
-	res.send(renderIndexPage(HTML.index, generateLatest(), await generatePostArray(10)));
+	res.send(renderIndexPage(HTML.index, generateLatest(), await generatePostArray()));
 });
 
 const server = app.listen(port, () => {
