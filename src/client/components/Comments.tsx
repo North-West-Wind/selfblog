@@ -5,7 +5,7 @@ type NestedComment = DatabaseComment & { children?: NestedComment[] };
 
 const Comment = (props: { comment: NestedComment }) => {
 	return <div class="comment">
-		<div class="name">{props.comment.authorName}</div>
+		<div class="name">{props.comment.authorName} <a href={props.comment.authorUrl} target={props.comment.authorName}>Link</a></div>
 		<div class="content" dangerouslySetInnerHTML={{ __html: props.comment.content }}></div>
 		{props.comment.children?.map(comment => <Comment comment={comment} />)}
 	</div>;

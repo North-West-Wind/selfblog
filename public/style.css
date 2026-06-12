@@ -264,6 +264,10 @@ div .ws-container {
 	filter: brightness(125%);
 }
 
+#comments .name a {
+	font-size: 1.5vmax;
+}
+
 #comments .comment {
 	padding: 2vmax;
 	border-color: #fff7;
