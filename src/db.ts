@@ -32,7 +32,7 @@ export async function syncDatabase() {
 			.update(`${date.getDate()}`.padStart(2, "0"))
 			.update(name).digest("hex");
 		currentPosts.push(relDir);
-		const visits = oldPosts.get(hashId) || 0;
+		let visits = oldPosts.get(hashId) || 0;
 		if (fs.existsSync(path.join(dir, ".federation"))) {
 			let id = fs.readFileSync(path.join(dir, ".federation"), "utf8");
 			const result = await db.update(postsTable).set({ path: relDir, visits, lastModifiedAt: mtime }).where(eq(postsTable.id, id));
@@ -42,6 +42,7 @@ export async function syncDatabase() {
 			}
 			fs.rmSync(path.join(dir, ".federation"));
 		} else {
+			visits = (await db.select({ visits: postsTable.visits }).from(postsTable).where(eq(postsTable.path, relDir)))[0]?.visits || visits;
 			const result = await db.update(postsTable).set({ visits, lastModifiedAt: mtime }).where(eq(postsTable.path, relDir));
 			if (result.changes == 0) {
 				await db.insert(postsTable).values({ id: crypto.randomUUID(), path: relDir, visits, lastModifiedAt: mtime });
