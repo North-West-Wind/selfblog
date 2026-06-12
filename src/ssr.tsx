@@ -1,6 +1,6 @@
 import renderToString from "preact-render-to-string";
-import NavApp from "./client/pages/NavApp";
-import App from "./client/App";
+import NavBar from "./client/pages/nav";
+import App from "./client";
 import { Post } from "./util";
 import { Base64 } from "js-base64";
 
@@ -8,7 +8,7 @@ function isSamePosts(a: Post[], b: Post[]) {
 	return a.length == b.length && a.every((post, ii) => post.title == b[ii].title && post.url == b[ii].url);
 }
 
-const navBar = renderToString(<NavApp />);
+const navBar = renderToString(<NavBar />);
 let listCache = "", indexCache = "";
 let cachedLatest = "";
 let cachedIndexPosts: Post[] = [];

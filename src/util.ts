@@ -4,7 +4,8 @@ import { load } from "cheerio";
 import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";
-import { getVisit } from "./db";
+import { getVisits } from "./db";
+import { baseUrl, dataDir, password } from "./constants";
 
 export type Post = {
 	title: string,
@@ -21,8 +22,8 @@ export type DBPost = {
 }
 
 export function* postIterator(options?: { includeHidden?: boolean, ascending?: boolean }) {
-	for (const year of fs.readdirSync("data").filter(dir => fs.statSync(path.join("data", dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString())) {
-		const yearPath = path.join("data", year);
+	for (const year of fs.readdirSync(dataDir).filter(dir => fs.statSync(path.join(dataDir, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString())) {
+		const yearPath = path.join(dataDir, year);
 		for (const month of fs.readdirSync(yearPath).filter(dir => fs.statSync(path.join(yearPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString().padStart(2, "0"))) {
 			const monthPath = path.join(yearPath, month);
 			for (const day of fs.readdirSync(monthPath).filter(dir => fs.statSync(path.join(monthPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString().padStart(2, "0"))) {
@@ -39,7 +40,6 @@ export function* postIterator(options?: { includeHidden?: boolean, ascending?: b
 }
 
 export function generateFeed(baseUrl: string, limit: number) {
-	if (process.env.BASE_URL) baseUrl = process.env.BASE_URL;
 	const feed = new Feed({
 		title: "NorthWestBlog",
 		description: "Home-made blogware of NorthWestWind.",
@@ -84,7 +84,7 @@ export function generateFeed(baseUrl: string, limit: number) {
 	return feed;
 }
 
-export function generatePostArray(limit = 0) {
+export async function generatePostArray(limit = 0) {
 	const items: Post[] = [];
 	for (const { dir, date, post } of postIterator()) {
 		const year = date.getFullYear();
@@ -99,16 +99,17 @@ export function generatePostArray(limit = 0) {
 			summary: $(".p-summary").text(),
 			date: `${year}/${month}/${day}`,
 			url: `/p/${year}/${month}/${day}/${post}`,
-			visits: post ? getVisit(year, month, day, post) : 0
 		} as Post);
 
 		if (limit && items.length >= limit) break;
 	}
+	const visits = new Map((await getVisits(items.map(item => item.url.slice(3)))).map(result => [result.path, result.visits]));
+	items.forEach(item => visits.get(item.url.slice(3)));
 	return items;
 }
 
 export function generateLatest() {
-	const item = generateFeed("", 1).items[0];
+	const item = generateFeed(baseUrl, 1).items[0];
 	const year = item.date.getFullYear();
 	const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
 	const day = item.date.getDate().toString().padStart(2, "0");
@@ -119,5 +120,5 @@ export function checkAuth(req: Request) {
 	if (!req.headers.authorization) return 400;
 	const hashed = req.headers.authorization;
 	const now = Math.floor(Date.now() / 300000);
-	return compareSync(process.env.PASSWORD! + now, hashed) ? 200 : 403;
+	return compareSync(password + now, hashed) ? 200 : 403;
 }

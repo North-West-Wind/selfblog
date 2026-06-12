@@ -1,16 +1,16 @@
-import "dotenv/config";
 import express from "express";
 import * as fs from "fs";
 import isTextPath from "is-text-path";
 import { AddressInfo } from "net";
 import * as path from "path";
-import { checkAuth, generateFeed, generateLatest, generatePostArray } from "./util";
+import { checkAuth, generateFeed, generateLatest, generatePostArray, postIterator } from "./util";
 import compression from "compression";
 import sirv from "sirv";
 import { renderIndexPage } from "./ssr";
-import { incrementVisit } from "./db";
+import { getCommentsByPostPath, incrementVisit, syncDatabase } from "./db";
+import { apUsername, dataDir, debugFlag, donateAbout, port, redirectAbout } from "./constants";
 
-if (!fs.existsSync("data")) fs.mkdirSync("data");
+fs.mkdirSync(dataDir, { recursive: true });
 
 const app = express();
 export { app };
@@ -18,7 +18,7 @@ export { app };
 const ap = import("./activitypub");
 
 app.use(compression());
-app.use("/", sirv("./public", { extensions: [], dev: !!process.env.DEBUG }));
+app.use("/", sirv("./public", { extensions: [], dev: debugFlag }));
 app.use("/api", express.json());
 
 app.use("/api", (req, res, next) => {
@@ -33,24 +33,22 @@ app.use("/api", (req, res, next) => {
 });
 
 app.get("/p/latest", (_req, res) => {
-	const item = generateFeed("", 1).items[0];
-	const year = item.date.getFullYear();
-	const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
-	const day = item.date.getDate().toString().padStart(2, "0");
-	res.redirect(`/p/${year}/${month}/${day}/${item.id?.split("/").pop()}`);
+	const post = postIterator().next().value!;
+	res.redirect(`/p/${path.relative(dataDir, post.dir)}`);
 });
 
-app.get("/p/:year/:month/:day/:post", (req, res) => {
-	const file = path.join(__dirname, "../data", req.params.year, req.params.month, req.params.day, req.params.post, "index.html");
+app.get("/p/:year/:month/:day/:post", async (req, res) => {
+	const relDir = path.join(req.params.year, req.params.month, req.params.day, req.params.post);
+	const file = path.join(dataDir, relDir, "index.html");
 	if (fs.existsSync(file)) {
 		if (!fs.existsSync(path.join(path.dirname(file), ".hidden")) && req.headers["sec-fetch-dest"] != "iframe")
-			incrementVisit(req.params.year, req.params.month, req.params.day, req.params.post);
-		res.sendFile(file);
+			await incrementVisit(relDir);
+		res.sendFile(path.resolve(__dirname, "..", file));
 	} else res.sendFile(path.join(__dirname, "../public/errors/404.html"));
 });
 
 app.get("/p/:year/:month/:day/:post/:file", (req, res) => {
-	res.sendFile(path.join(__dirname, "../data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file));
+	res.sendFile(path.resolve(__dirname, "..", dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file));
 });
 
 app.get("/api/list", (req, res) => {
@@ -65,7 +63,7 @@ app.post("/api/new", (req, res) => {
 	}
 	const date = new Date(req.body.date);
 	const title = (req.body.title as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
-	const dir = path.join("data", date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
+	const dir = path.join(dataDir, date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
 	fs.mkdirSync(dir, { recursive: true });
 	if (!fs.existsSync(path.join(dir, "index.html"))) {
 		fs.cpSync(path.join("public", "template.html"), path.join(dir, "index.html"));
@@ -81,7 +79,7 @@ app.post("/api/new", (req, res) => {
 });
 
 app.get("/api/edit/:year/:month/:day/:post/files", (req, res) => {
-	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
 		res.sendStatus(404);
 		return;
@@ -99,7 +97,7 @@ app.post("/api/edit/:year/:month/:day/:post/new", (req, res) => {
 		res.sendStatus(400);
 		return;
 	}
-	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.body.name);
+	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.body.name);
 	if (!fs.existsSync(file)) fs.createWriteStream(file).end();
 	res.sendStatus(200);
 });
@@ -109,13 +107,13 @@ app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
 		res.sendStatus(400);
 		return;
 	}
-	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
 		res.sendStatus(404);
 		return;
 	}
 	const title = (req.body.name as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
-	fs.renameSync(dir, path.join("data", req.params.year, req.params.month, req.params.day, title));
+	fs.renameSync(dir, path.join(dataDir, req.params.year, req.params.month, req.params.day, title));
 	res.send(title);
 });
 
@@ -125,7 +123,7 @@ app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
 		res.sendStatus(400);
 		return;
 	}
-	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	// Check if overwrite
 	for (const file of files) {
 		if (fs.existsSync(path.join(dir, file.name))) {
@@ -140,7 +138,7 @@ app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
 });
 
 app.post("/api/edit/:year/:month/:day/:post/publish", (req, res) => {
-	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	const hiddenFile = path.join(dir, ".hidden");
 	if (!fs.existsSync(hiddenFile)) {
 		res.sendStatus(404);
@@ -148,11 +146,12 @@ app.post("/api/edit/:year/:month/:day/:post/publish", (req, res) => {
 	}
 	fs.rmSync(hiddenFile);
 	res.sendStatus(200);
-	ap.then(({ sync }) => sync(req as unknown as Request)).catch(err => console.error("Failed to sync posts:", err));
+	// Sync database, then sync activitypub
+	syncDatabase().then(() => ap).then(({ sync }) => sync(req as unknown as Request)).catch(err => console.error("Failed to sync posts:", err));
 });
 
 app.get("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const file = path.join(__dirname , "../data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
+	const file = path.join(__dirname , "..", dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
 	if (!fs.existsSync(file)) res.sendStatus(404);
 	else res.sendFile(file);
 });
@@ -162,7 +161,7 @@ app.post("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 		res.sendStatus(400);
 		return;
 	}
-	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
+	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
 	if (!fs.existsSync(file)) {
 		res.sendStatus(404);
 		return;
@@ -176,7 +175,7 @@ app.patch("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 		res.sendStatus(400);
 		return;
 	}
-	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
+	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
 	if (!fs.existsSync(file)) {
 		res.sendStatus(404);
 		return;
@@ -186,7 +185,7 @@ app.patch("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 });
 
 app.delete("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const file = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
+	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
 	if (!fs.existsSync(file)) {
 		res.sendStatus(404);
 		return;
@@ -196,7 +195,7 @@ app.delete("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
 });
 
 app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
-	const dir = path.join("data", req.params.year, req.params.month, req.params.day, req.params.post);
+	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
 		res.sendStatus(404);
 		return;
@@ -205,17 +204,30 @@ app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
 	res.sendStatus(200);
 });
 
+app.get("/api/comments/:year/:month/:day/:post", async (req, res) => {
+	const comments = await getCommentsByPostPath(path.join(req.params.year, req.params.month, req.params.day, req.params.post));
+	if (!comments) {
+		res.sendStatus(404);
+		return;
+	}
+	res.json(comments.map(comment => comment.comments));
+});
+
+app.get("/api/activitypub", (_req, res) => {
+	res.send(apUsername);
+});
+
 app.get("/rss", (req, res) => {
 	res.setHeader("Content-Disposition", "attachment; filename=\"northwestblog.rss\"");
 	res.send(generateFeed(`${req.protocol}://${req.headers.host}`, parseInt(<string> req.query.limit) || 0).rss2());
 });
 
 app.get("/about", (_req, res) => {
-	res.redirect(process.env.ABOUT_REDIRECT || "/");
+	res.redirect(redirectAbout || "/");
 });
 
 app.get("/donate", (_req, res) => {
-	res.redirect(process.env.DONATE_REDIRECT || "/");
+	res.redirect(donateAbout || "/");
 });
 
 app.get("/new", (_req, res) => {
@@ -234,10 +246,10 @@ const HTML = {
 	index: fs.readFileSync("./public/index.html", "utf8"),
 }
 
-app.get("/", (_req, res) => {
-	res.send(renderIndexPage(HTML.index, generateLatest(), generatePostArray(10)));
+app.get("/", async (_req, res) => {
+	res.send(renderIndexPage(HTML.index, generateLatest(), await generatePostArray(10)));
 });
 
-const server = app.listen(process.env.PORT || 3000, () => {
+const server = app.listen(port, () => {
 	console.log(`App listening on port ${(<AddressInfo>server.address()).port}`);
 });

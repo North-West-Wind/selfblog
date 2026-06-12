@@ -254,3 +254,25 @@ div .ws-container {
 	background-color: #000a;
 	backdrop-filter: blur(1vmax);
 }
+
+#comments {
+	filter: hue-rotate(120deg);
+}
+
+#comments .name {
+	font-size: 2.5vmax;
+	filter: brightness(125%);
+}
+
+#comments .comment {
+	padding: 2vmax;
+	border-color: #fff7;
+	border-radius: 2vmax;
+	border-width: 1px;
+	border-style: solid;
+	margin-top: 1vmax;
+}
+
+#comments p {
+	margin: 0;
+}

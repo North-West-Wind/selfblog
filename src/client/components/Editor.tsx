@@ -15,7 +15,7 @@ export default function EditorComponent() {
 	const fileSelect = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
-		monaco?.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+		monaco?.typescript.javascriptDefaults.setEagerModelSync(true);
 		
 		const hashchange = () => {
 			if (password)
