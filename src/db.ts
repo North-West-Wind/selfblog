@@ -25,26 +25,26 @@ export async function syncDatabase() {
 	const currentPosts: string[] = [];
 	Array.from(postIterator()).map(async ({ dir, date, post: name }) => {
 		const mtime = new Date(fs.readdirSync(dir).map(entry => fs.statSync(path.join(dir, entry)).mtimeMs).reduce((a, b) => Math.max(a, b)));
-		dir = path.relative(dataDir, dir);
+		const relDir = path.relative(dataDir, dir);
 		const hashId = crypto.createHash("SHA1")
 			.update(`${date.getFullYear()}`)
 			.update(`${date.getMonth() + 1}`.padStart(2, "0"))
 			.update(`${date.getDate()}`.padStart(2, "0"))
 			.update(name).digest("hex");
-		currentPosts.push(dir);
-		const visits = oldPosts.get(hashId);
+		currentPosts.push(relDir);
+		const visits = oldPosts.get(hashId) || 0;
 		if (fs.existsSync(path.join(dir, ".federation"))) {
 			let id = fs.readFileSync(path.join(dir, ".federation"), "utf8");
-			const result = await db.update(postsTable).set({ path: dir, visits, lastModifiedAt: mtime }).where(eq(postsTable.id, id));
+			const result = await db.update(postsTable).set({ path: relDir, visits, lastModifiedAt: mtime }).where(eq(postsTable.id, id));
 			if (result.changes == 0) {
-				await db.insert(postsTable).values({ id, path: dir, visits: visits || 0, lastModifiedAt: mtime });
+				await db.insert(postsTable).values({ id, path: relDir, visits, lastModifiedAt: mtime });
 				inserted++;
 			}
 			fs.rmSync(path.join(dir, ".federation"));
 		} else {
-			const result = await db.update(postsTable).set({ visits, lastModifiedAt: mtime }).where(eq(postsTable.path, dir));
+			const result = await db.update(postsTable).set({ visits, lastModifiedAt: mtime }).where(eq(postsTable.path, relDir));
 			if (result.changes == 0) {
-				await db.insert(postsTable).values({ id: crypto.randomUUID(), path: dir, visits: visits || 0, lastModifiedAt: mtime });
+				await db.insert(postsTable).values({ id: crypto.randomUUID(), path: relDir, visits, lastModifiedAt: mtime });
 				inserted++;
 			}
 		}
