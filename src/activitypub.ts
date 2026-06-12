@@ -108,7 +108,6 @@ federation
 		if (!(object instanceof Note) || object.id == null || create.actorId == null) return;
 		const replyTargetId = object.replyTargetId;
 		if (replyTargetId == null) return;
-		console.log(replyTargetId);
 		let post: DatabasePost | undefined;
 		const parsed = ctx.parseUri(replyTargetId);
 		if (parsed) {
