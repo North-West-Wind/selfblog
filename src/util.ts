@@ -104,7 +104,7 @@ export async function generatePostArray(limit = 0) {
 		if (limit && items.length >= limit) break;
 	}
 	const visits = new Map((await getVisits(items.map(item => item.url.slice(3)))).map(result => [result.path, result.visits]));
-	items.forEach(item => visits.get(item.url.slice(3)));
+	items.forEach(item => item.visits = visits.get(item.url.slice(3)) || 0);
 	return items;
 }
 
