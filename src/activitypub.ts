@@ -118,7 +118,7 @@ federation
 		}
 		if (!post) {
 			const commentWithPost = await getCommentWithPostById(replyTargetId.href);
-			if (!commentWithPost.posts) return;
+			if (!commentWithPost?.posts) return;
 			post = commentWithPost.posts;
 		}
 		const author = await create.getActor(ctx);
