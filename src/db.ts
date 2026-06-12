@@ -23,7 +23,7 @@ export async function syncDatabase() {
 
 	let inserted = 0;
 	const currentPosts: string[] = [];
-	Array.from(postIterator()).map(async ({ dir, date, post: name }) => {
+	await Promise.all(Array.from(postIterator()).map(async ({ dir, date, post: name }) => {
 		const mtime = new Date(fs.readdirSync(dir).map(entry => fs.statSync(path.join(dir, entry)).mtimeMs).reduce((a, b) => Math.max(a, b)));
 		const relDir = path.relative(dataDir, dir);
 		const hashId = crypto.createHash("SHA1")
@@ -48,7 +48,7 @@ export async function syncDatabase() {
 				inserted++;
 			}
 		}
-	});
+	}));
 	console.log(`Inserted ${inserted} rows to posts`);
 
 	const posts = await db.select({ id: postsTable.id }).from(postsTable).where(notInArray(postsTable.path, currentPosts));
