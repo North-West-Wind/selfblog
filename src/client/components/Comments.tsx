@@ -13,7 +13,7 @@ const Comment = (props: { comment: NestedComment }) => {
 
 const Comments = () => {
 	const [apUsername, setApUsername] = useState("");
-	const [comments, setComments] = useState<NestedComment[]>();
+	const [comments, setComments] = useState<NestedComment[]>([]);
 
 	useEffect(() => {
 		fetch(`/api/comments/${window.location.pathname.replace("/p/", "")}`).then(async res => {
@@ -31,7 +31,6 @@ const Comments = () => {
 						commentMap.set(comment.id, comment);
 					}
 				}
-				console.log(comments);
 				setComments(comments);
 			} else setComments([]);
 		}).catch(err => {
@@ -44,11 +43,11 @@ const Comments = () => {
 	}, []);
 
 	return <>
-		<h1>{comments !== undefined ? `Comments (${comments.length})`: "Loading comments..."}</h1>
-		{comments && apUsername && <p>
+		<h1>Comments ({comments.length})</h1>
+		{apUsername && <p>
 			Comment from the Fediverse! Search for "{apUsername}@{window.location.host}" on your Mastodon/Lemmy/Piefed (any ActivityPub-based) instance to write your comment!
 		</p>}
-		{comments?.map(comment => <Comment comment={comment} />)}
+		{comments.map(comment => <Comment comment={comment} />)}
 	</>
 };
 
