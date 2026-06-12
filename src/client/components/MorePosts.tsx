@@ -6,7 +6,7 @@ const MorePostsComponent = (props: { posts?: Post[] }) => {
 	const [posts, setPosts] = useState<Post[] | undefined>(props.posts);
 	useEffect(() => {
 		if (!props.posts) {
-			fetch("/api/list?limit=10").then(async res => {
+			fetch("/api/list").then(async res => {
 				if (res.ok) setPosts(await res.json());
 				else setPosts([]);
 			});
@@ -29,7 +29,6 @@ const MorePostsComponent = (props: { posts?: Post[] }) => {
 					</tr>)}
 				</tbody>
 			</table>
-			<h3><a href="/list">Show all...</a></h3>
 		</>}
 	</>
 }
