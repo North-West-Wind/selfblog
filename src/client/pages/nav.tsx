@@ -17,10 +17,19 @@ const NavBar = () => {
 	</>;
 }
 
+if (globalThis.location?.pathname.startsWith("/p/")) {
+	const div = document.createElement("div");
+	div.id = "comments";
+	document.body.appendChild(div);
+	createRoot(div).render(<Comments />);
+}
+
 if (globalThis.document) {
 	const observer = new MutationObserver((list) => {
 	  if (list.some(mutation => mutation.type === "attributes" && mutation.attributeName === "formatia")) {
 	    hydrate(<NavBar />, document.getElementById("nav")!);
+			const comments = document.getElementById("comments");
+			if (comments) hydrate(<Comments />, comments);
 	    observer.disconnect();
 	  }
 	});
@@ -28,13 +37,6 @@ if (globalThis.document) {
 	observer.observe(document.body, { attributes: true });
 
 	hydrate(<NavBar />, document.getElementById("nav")!);
-}
-
-if (globalThis.location?.pathname.startsWith("/p/")) {
-	const div = document.createElement("div");
-	div.id = "comments";
-	document.body.appendChild(div);
-	createRoot(div).render(<Comments />);
 }
 
 export default NavBar;
