@@ -1,11 +1,9 @@
 import { Feed } from "@numbered/feed";
-import { compareSync } from "bcryptjs";
 import { load } from "cheerio";
-import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";
 import { getVisits } from "./db";
-import { baseUrl, dataDir, password } from "./constants";
+import { baseUrl, dataDir } from "./constants";
 
 export type Post = {
 	title: string,
@@ -114,11 +112,4 @@ export function generateLatest() {
 	const month = (item.date.getMonth() + 1).toString().padStart(2, "0");
 	const day = item.date.getDate().toString().padStart(2, "0");
 	return `/p/${year}/${month}/${day}/${item.id?.split("/").pop()}`;
-}
-
-export function checkAuth(req: Request) {
-	if (!req.headers.authorization) return 400;
-	const hashed = req.headers.authorization;
-	const now = Math.floor(Date.now() / 300000);
-	return compareSync(password + now, hashed) ? 200 : 403;
 }

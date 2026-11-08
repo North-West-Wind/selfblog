@@ -304,3 +304,7 @@ app.use(integrateFederation(federation, (req) => {
 		});
 	}
 }));
+
+app.get("/api/activitypub", (_req, res) => {
+	res.send(apUsername);
+});

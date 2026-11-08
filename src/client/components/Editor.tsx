@@ -1,7 +1,7 @@
 import { Editor, useMonaco } from "@monaco-editor/react";
 import React, { useEffect, useRef, useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
-import { timeHash } from "../helper";
+import { serverHash } from "../helper";
 import { Base64 } from "js-base64";
 
 let code = "";
@@ -17,9 +17,9 @@ export default function EditorComponent() {
 	useEffect(() => {
 		monaco?.typescript.javascriptDefaults.setEagerModelSync(true);
 		
-		const hashchange = () => {
+		const hashchange = async () => {
 			if (password)
-				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: timeHash(password) } }).then(async res => {
+				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: await serverHash(password) } }).then(async res => {
 					if (res.ok) {
 						const text = await res.text();
 						code = text;
@@ -48,18 +48,9 @@ export default function EditorComponent() {
 		return () => window.removeEventListener("keydown", keydown);
 	}, []);
 
-	useEffect(() => {
-		let timeout: NodeJS.Timeout | undefined = setTimeout(() => {
-			timeout = undefined;
-			setHashed(timeHash(password));
-		}, (Math.floor(Date.now() / 300000) + 1) * 300000 - Date.now());
-		return () => timeout && clearTimeout(timeout);
-	}, [hashed]);
-
 	const onPwKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key == "Enter") {
 			password = e.currentTarget.value;
-			setHashed(timeHash(password));
 
 			e.preventDefault();
 			(e.target as HTMLInputElement).blur();
@@ -68,10 +59,10 @@ export default function EditorComponent() {
 
 	const save = () => {
 		if (password)
-			toast.promise(new Promise<void>((resolve, reject) => {
+			toast.promise(new Promise<void>(async (resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, {
 					method: "POST",
-					headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
+					headers: { Authorization: await serverHash(password), "Content-Type": "application/json" },
 					body: JSON.stringify({ code })
 				}).then(res => {
 					if (res.ok) resolve();
@@ -86,8 +77,8 @@ export default function EditorComponent() {
 
 	const reload = () => {
 		if (password) {
-			toast.promise(new Promise<void>((resolve, reject) => {
-				fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: timeHash(password) } }).then(async res => {
+			toast.promise(new Promise<void>(async (resolve, reject) => {
+				fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: await serverHash(password) } }).then(async res => {
 					if (res.ok) {
 						setFiles(await res.json());
 						resolve();
@@ -99,8 +90,8 @@ export default function EditorComponent() {
 				error: "Failed to reload file list!"
 			})
 			if (window.location.hash) {
-				toast.promise(new Promise<void>((resolve, reject) => {
-					fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: timeHash(password) } }).then(async res => {
+				toast.promise(new Promise<void>(async (resolve, reject) => {
+					fetch(`/api${window.location.pathname}/${window.location.hash.slice(1)}`, { headers: { Authorization: await serverHash(password) } }).then(async res => {
 						const text = await res.text();
 						if (res.ok) {
 							code = text;
@@ -125,10 +116,10 @@ export default function EditorComponent() {
 		if (password) {
 			const name = prompt("Rename to:");
 			if (!name) return;
-			toast.promise(new Promise<void>((resolve, reject) => {
+			toast.promise(new Promise<void>(async (resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${currentFile}`, {
 					method: "PATCH",
-					headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
+					headers: { Authorization: await serverHash(password), "Content-Type": "application/json" },
 					body: JSON.stringify({ name })
 				}).then(res => {
 					if (res.ok) {
@@ -145,13 +136,13 @@ export default function EditorComponent() {
 		}
 	}
 
-	const renamePath = () => {
+	const renamePath = async () => {
 		if (password) {
 			const name = prompt("New path name:");
 			if (!name) return;
 			fetch(`/api${window.location.pathname}/rename`, {
 				method: "POST",
-				headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
+				headers: { Authorization: await serverHash(password), "Content-Type": "application/json" },
 				body: JSON.stringify({ name })
 			}).then(async res => {
 				if (res.ok) {
@@ -167,10 +158,10 @@ export default function EditorComponent() {
 		if (password) {
 			const name = prompt("File name:");
 			if (!name) return;
-			toast.promise(new Promise<void>((resolve, reject) => {
+			toast.promise(new Promise<void>(async (resolve, reject) => {
 				fetch(`/api${window.location.pathname}/new`, {
 					method: "POST",
-					headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
+					headers: { Authorization: await serverHash(password), "Content-Type": "application/json" },
 					body: JSON.stringify({ name })
 				}).then(res => {
 					if (res.ok) {
@@ -191,10 +182,10 @@ export default function EditorComponent() {
 		if (password) {
 			const result = confirm("Are you sure you want to delete this file?");
 			if (!result) return;
-			toast.promise(new Promise<void>((resolve, reject) => {
+			toast.promise(new Promise<void>(async (resolve, reject) => {
 				fetch(`/api${window.location.pathname}/${currentFile}`, {
 					method: "DELETE",
-					headers: { Authorization: timeHash(password), "Content-Type": "application/json" }
+					headers: { Authorization: await serverHash(password), "Content-Type": "application/json" }
 				}).then(res => {
 					if (res.ok) {
 						reload();
@@ -219,10 +210,10 @@ export default function EditorComponent() {
 				data: Base64.fromUint8Array(await file.bytes())
 			};
 		}));
-		toast.promise(new Promise<void>((resolve, reject) => {
+		toast.promise(new Promise<void>(async (resolve, reject) => {
 			fetch(`/api${window.location.pathname}/upload`, {
 				method: "POST",
-				headers: { Authorization: timeHash(password), "Content-Type": "application/json" },
+				headers: { Authorization: await serverHash(password), "Content-Type": "application/json" },
 				body: JSON.stringify(data)
 			}).then(res => {
 				if (res.ok) {
@@ -242,10 +233,10 @@ export default function EditorComponent() {
 		if (files.every(({ name }) => name != ".hidden")) return toast.warn("Already published");
 		if (!confirm("Are you sure you want to publish this blog post?")) return;
 		
-		toast.promise(new Promise<void>((resolve, reject) => {
+		toast.promise(new Promise<void>(async (resolve, reject) => {
 			fetch(`/api${window.location.pathname}/publish`, {
 				method: "POST",
-				headers: { Authorization: timeHash(password) }
+				headers: { Authorization: await serverHash(password) }
 			}).then(res => {
 				if (res.ok) {
 					reload();
