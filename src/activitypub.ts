@@ -4,14 +4,13 @@ import { Context, createFederation, exportJwk, generateCryptoKeyPair, importJwk,
 import { SqliteKvStore } from "@fedify/sqlite";
 import { Accept, Article, Create, Delete, Follow, Image, Note, Person, PUBLIC_COLLECTION, Recipient, Undo, Update } from "@fedify/vocab";
 import { DatabaseSync } from "node:sqlite";
-import { DBPost } from "./util";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { load } from "cheerio";
 import { Temporal } from "@js-temporal/polyfill";
 import { configure, getConsoleSink } from "@logtape/logtape";
-import { apDisplayName, apSummary, apUsername, dataDir } from "./constants";
+import { apUsername, dataDir, siteDescription, siteName } from "./constants";
 import { addFollower, getPostById, getPosts, getProfile, hostHasFollower, setProfile, deleteFollower, updatePostLastSyncByIds, addComment, getCommentAuthorUrl, updateComment, deleteComment, syncDatabase, getCommentWithPostById } from "./db";
 import { DatabasePost, postsTable } from "./db/schema";
 
@@ -33,12 +32,12 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 	const keyPairs = await ctx.getActorKeyPairs(id);
 	return new Person({
 		id: ctx.getActorUri(id),
-		name: apDisplayName,
+		name: siteName,
 		icon: new Image({
 			url: new URL("/assets/icon.gif", ctx.url),
 			mediaType: "image/gif"
 		}),
-		summary: apSummary,
+		summary: siteDescription,
 		preferredUsername: id,
 		url: new URL("/", ctx.url),
 		inbox: ctx.getInboxUri(id),

@@ -9,6 +9,8 @@ import sirv from "sirv";
 import { renderIndexPage } from "./ssr";
 import { incrementVisit } from "./db";
 import { dataDir, debugFlag, donateAbout, port, redirectAbout } from "./constants";
+import { marked } from "marked";
+import { load } from "cheerio";
 
 fs.mkdirSync(dataDir, { recursive: true });
 
@@ -18,18 +20,33 @@ export { app };
 app.use(compression());
 app.use("/", sirv("./public", { extensions: [], dev: debugFlag }));
 
+import("./api");
+
 app.get("/p/latest", (_req, res) => {
 	const post = postIterator().next().value!;
 	res.redirect(`/p/${path.relative(dataDir, post.dir)}`);
 });
 
+const templateHtml = fs.readFileSync("public/template.html", "utf8");
 app.get("/p/:year/:month/:day/:post", async (req, res) => {
 	const relDir = path.join(req.params.year, req.params.month, req.params.day, req.params.post);
-	const file = path.join(dataDir, relDir, "index.html");
-	if (fs.existsSync(file)) {
-		if (!fs.existsSync(path.join(path.dirname(file), ".hidden")) && req.headers["sec-fetch-dest"] != "iframe")
+	const mdFile = path.join(dataDir, relDir, "index.md");
+	if (fs.existsSync(mdFile)) {
+		if (!fs.existsSync(path.join(dataDir, relDir, ".hidden")) && req.headers["sec-fetch-dest"] != "iframe")
 			await incrementVisit(relDir);
-		res.sendFile(path.resolve(__dirname, "..", file));
+		const html = await marked.parse(fs.readFileSync(mdFile, "utf8"));
+		const $ = load(html);
+		const title = $("h1").first().remove().text();
+		const date = $("p").first().remove().text().replace("Date: ", "");
+		const h2 = $("h2").first();
+		const summary = h2.next("p").remove().text().trim() || "";
+		h2.remove();
+		$("hr").first().remove();
+		res.send(templateHtml
+			.replace(/{title}/g, title)
+			.replace(/{date}/g, date)
+			.replace(/{summary}/, summary)
+			.replace(/{content}/, $.html()));
 	} else res.sendFile(path.join(__dirname, "../public/errors/404.html"));
 });
 

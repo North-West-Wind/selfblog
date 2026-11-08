@@ -1,5 +1,14 @@
+body {
+	margin: 0;
+	padding: 0;
+}
+
 h2 {
 	margin: 0;
+}
+
+p {
+	font-size: 1vmax;
 }
 
 input {
@@ -7,7 +16,7 @@ input {
 	margin: .5vh;
 	border-style: solid;
 	border-radius: 1vh;
-	font-size: 1.25vw;
+	font-size: 1vmax;
 }
 
 input.hidden {
@@ -22,7 +31,7 @@ input.hidden {
 .button {
 	padding: 1vh;
 	margin-bottom: 1vh;
-	font-size: max(1.25vw, 2.5vh);
+	font-size: 1vmax;
 }
 
 .file-button {
@@ -37,4 +46,8 @@ input.hidden {
 .file-button:hover {
 	filter: brightness(80%);
 	cursor: pointer;
+}
+
+.w-md-editor {
+	--md-editor-font-family: 'Courier New', Courier, monospace !important;
 }

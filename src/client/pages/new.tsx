@@ -25,9 +25,7 @@ const NewPage: React.FC = () => {
 			});
 			if (res.ok) {
 				setCreateState(2);
-				setTimeout(async () => {
-					window.location.pathname = (await res.json()).url;
-				}, 3000);
+				setTimeout(async () => window.location.pathname = await res.text(), 3000);
 			} else throw new Error("Not OK");
 		} catch (err) {
 			setCreateState(0);

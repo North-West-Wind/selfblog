@@ -3,7 +3,9 @@ import { load } from "cheerio";
 import * as fs from "fs";
 import * as path from "path";
 import { getVisits } from "./db";
-import { baseUrl, dataDir } from "./constants";
+import { baseUrl, dataDir, feedAuthor, feedAuthorLink, feedCopyright, feedFavicon, feedImage, siteDescription, siteName } from "./constants";
+import moment from "moment";
+import { marked } from "marked";
 
 export type Post = {
 	title: string,
@@ -20,13 +22,28 @@ export type DBPost = {
 }
 
 export function* postIterator(options?: { includeHidden?: boolean, ascending?: boolean }) {
-	for (const year of fs.readdirSync(dataDir).filter(dir => fs.statSync(path.join(dataDir, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString())) {
+	const sortedNumberDirectories = (parent: string) => {
+		const entries = fs.readdirSync(parent);
+		return entries
+			.filter(dir => fs.statSync(path.join(parent, dir)).isDirectory())
+			.sort((a, b) => {
+				const aInt = parseInt(a);
+				const bInt = parseInt(b);
+				return options?.ascending ? aInt - bInt : bInt - aInt;
+			});
+	};
+	for (const year of sortedNumberDirectories(dataDir)) {
 		const yearPath = path.join(dataDir, year);
-		for (const month of fs.readdirSync(yearPath).filter(dir => fs.statSync(path.join(yearPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString().padStart(2, "0"))) {
+		for (const month of sortedNumberDirectories(yearPath)) {
 			const monthPath = path.join(yearPath, month);
-			for (const day of fs.readdirSync(monthPath).filter(dir => fs.statSync(path.join(monthPath, dir)).isDirectory()).map(v => parseInt(v)).sort((a, b) => options?.ascending ? a - b : b - a).map(v => v.toString().padStart(2, "0"))) {
+			for (const day of sortedNumberDirectories(monthPath)) {
 				const dayPath = path.join(monthPath, day);
-				for (const post of fs.readdirSync(dayPath).filter(dir => fs.statSync(path.join(dayPath, dir)).isDirectory()).map(v => ({ name:v, time:fs.statSync(path.join(dayPath, v)).mtime.getTime() })).sort((a, b) => options?.ascending ? a.time - b.time : b.time - a.time).map(v => v.name)) {
+				const posts = fs.readdirSync(dayPath)
+					.filter(dir => fs.statSync(path.join(dayPath, dir)).isDirectory())
+					.map(v => ({ name: v, time: fs.statSync(path.join(dayPath, v)).mtime.getTime() }))
+					.sort((a, b) => options?.ascending ? a.time - b.time : b.time - a.time)
+					.map(v => v.name);
+				for (const post of posts) {
 					const postPath = path.join(dayPath, post);
 					if (fs.existsSync(path.join(postPath, ".hidden")) && !options?.includeHidden) continue;
 					const date = new Date(`${year}/${month}/${day}`);
@@ -39,42 +56,44 @@ export function* postIterator(options?: { includeHidden?: boolean, ascending?: b
 
 export function generateFeed(baseUrl: string, limit: number) {
 	const feed = new Feed({
-		title: "NorthWestBlog",
-		description: "Home-made blogware of NorthWestWind.",
+		title: siteName,
+		description: siteDescription,
 		id: baseUrl,
 		link: baseUrl,
-		image: `${baseUrl}/assets/icon.gif`,
-		favicon: `${baseUrl}/favicon.ico`,
-		copyright: "Use whatever you found here, but please credit me, especially images.",
+		image: feedImage ? `${baseUrl}${feedImage}` : undefined,
+		favicon: feedFavicon ? `${baseUrl}${feedFavicon}` : undefined,
+		copyright: feedCopyright,
 		feedLinks: {
 			json: `${baseUrl}/json`,
 			atom: `${baseUrl}/atom`
 		},
 		author: {
-			name: "NorthWestWind",
-			link: "https://www.northwestw.in"
+			name: feedAuthor,
+			link: feedAuthorLink
 		}
 	});
 	for (const { dir, date, post } of postIterator()) {
+		const mdFile = path.join(dir, "index.md");
+		if (!fs.existsSync(mdFile)) continue;
 		if (!feed.options.updated)
 			feed.options.updated = date;
-		const html = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
-		const $ = load(html);
-		const img = $("img[featured]").attr("src");
-		const summary = $(".p-summary").text();
-		const year = date.getFullYear();
-		const month = date.getMonth() + 1;
-		const day = date.getDate();
+		const markdown = fs.readFileSync(mdFile, "utf8");
+		const [meta, content] = markdown.split(/^-{3,}$/m, 2);
+		const title = meta.match(/^#\s+(.+)$/m)?.[1];
+		if (!title) continue;
+		const summary = meta.split(/^#+\s+Summary\s*$/m, 2)[1].replace(/  $/m, "\n");
+		const img = content.match(/!\[.*\]\((.*)\)/)?.[1];
+		const datePath = moment(date).format("YYYY/MM/DD");
 		feed.addItem({
-			title: $("title").text(),
+			title,
 			description: summary,
-			id: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
-			link: `${baseUrl}/p/${year}/${month}/${day}/${post}`,
+			id: `${baseUrl}/p/${datePath}/${post}`,
+			link: `${baseUrl}/p/${datePath}/${post}`,
 			date,
-			image: img ? `${baseUrl}/p/${year}/${month}/${day}/${img}` : undefined,
+			image: img ? `${baseUrl}/p/${datePath}/${img}` : undefined,
 			author: [{
-				name: "NorthWestWind",
-				link: "https://www.northwestw.in"
+				name: feedAuthor,
+				link: feedAuthorLink
 			}]
 		});
 		if (limit && feed.items.length >= limit) break;
@@ -85,18 +104,20 @@ export function generateFeed(baseUrl: string, limit: number) {
 export async function generatePostArray(limit = 0) {
 	const items: Post[] = [];
 	for (const { dir, date, post } of postIterator()) {
-		const year = date.getFullYear();
-		const month = (date.getMonth() + 1).toString().padStart(2, "0");
-		const day = date.getDate().toString().padStart(2, "0");
-
-		const html = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
-		const $ = load(html);
+		const mdFile = path.join(dir, "index.md");
+		if (!fs.existsSync(mdFile)) continue;
+		const markdown = fs.readFileSync(mdFile, "utf8");
+		const [meta] = markdown.split(/^-{3,}$/m, 2);
+		const title = meta.match(/^#\s+(.+)$/m)?.[1];
+		if (!title) continue;
+		const summary = meta.split(/^#+\s+Summary\s*$/m, 2)[1]?.replace(/  $/m, "\n");
+		const datePath = moment(date).format("YYYY/MM/DD");
 
 		items.push({
-			title: $("title").text(),
-			summary: $(".p-summary").text(),
-			date: `${year}/${month}/${day}`,
-			url: `/p/${year}/${month}/${day}/${post}`,
+			title,
+			summary,
+			date: datePath,
+			url: `/p/${datePath}/${post}`,
 		} as Post);
 
 		if (limit && items.length >= limit) break;

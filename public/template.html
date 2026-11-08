@@ -4,7 +4,6 @@
 <head>
 	<meta charset="utf-8">
 	<title>{title}</title>
-	<meta name="description" content="Blog description">
 	<meta name="author" content="NorthWestWind">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="icon" href="/favicon-light.png" media="(prefers-color-scheme: light)" />
@@ -12,21 +11,14 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Kanit">
 	<link rel="stylesheet" href="/style.css">
 	<script src="/bundle/nav.bundle.js" defer></script>
-	<script src="/bundle/formatia.bundle.js" defer></script>
 </head>
 
 <body class="h-entry">
 	<div id="nav"></div>
 	<h2><time class="dt-publish" datetime="{date}">{date}</time></h2>
 	<h1 class="p-name">{title}</h1>
-
-	<p class="p-summary">
-
-	</p>
-
-	<article class="e-content">
-
-	</article>
+	<p class="p-summary">{summary}</p>
+	<article class="e-content">{content}</article>
 </body>
 
 </html>

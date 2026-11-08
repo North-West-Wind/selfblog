@@ -12,8 +12,31 @@ if (!password) throw new Error("Missing PASSWORD environment variable");
 const redirectAbout = process.env.ABOUT_REDIRECT;
 const donateAbout = process.env.DONATE_REDIRECT;
 
-const apUsername = process.env.AP_USERNAME!;
-const apDisplayName = process.env.AP_DISPLAYNAME;
-const apSummary = process.env.AP_SUMMARY;
+const siteName = process.env.SITE_NAME || "Blog";
+const siteDescription = process.env.SITE_DESCRIPTION || "This is a blog";
 
-export { dataDir, debugFlag, port, baseUrl, password, redirectAbout, donateAbout, apUsername, apDisplayName, apSummary };
+const feedImage = process.env.FEED_IMAGE;
+const feedFavicon = process.env.FEED_FAVICON;
+const feedCopyright = process.env.FEED_COPYRIGHT || "All rights reserved";
+const feedAuthor = process.env.FEED_AUTHOR;
+const feedAuthorLink = process.env.FEED_AUTHOR_LINK;
+
+const apUsername = process.env.AP_USERNAME!;
+
+export {
+	dataDir,
+	debugFlag,
+	port,
+	baseUrl,
+	password,
+	redirectAbout,
+	donateAbout,
+	siteName,
+	siteDescription,
+	feedImage,
+	feedFavicon,
+	feedCopyright,
+	feedAuthor,
+	feedAuthorLink,
+	apUsername
+};

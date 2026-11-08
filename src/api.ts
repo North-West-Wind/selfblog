@@ -4,9 +4,10 @@ import { genSaltSync, hashSync } from "bcryptjs";
 import fs from "fs";
 import path from "path";
 import { generatePostArray } from "./util";
-import { dataDir, password } from "./constants";
-import isTextPath from "is-text-path";
+import { apUsername, dataDir, password } from "./constants";
 import { getCommentsByPostPath, syncDatabase } from "./db";
+import moment from "moment";
+import z from "zod";
 
 const ap = import("./activitypub");
 
@@ -22,8 +23,6 @@ function saltJson() {
 	}
 	return saltHolder;
 }
-
-app.use("/api", express.json());
 
 app.use("/api", (req, res, next) => {
 	if (req.method != "GET") {
@@ -44,87 +43,99 @@ app.get("/api/list", async (req, res) => {
 	res.json(await generatePostArray(limit));
 });
 
-app.post("/api/new", (req, res) => {
-	if (!req.body?.title || !req.body.date) {
-		res.sendStatus(400);
-		return;
-	}
-	const date = new Date(req.body.date);
-	const title = (req.body.title as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
-	const dir = path.join(dataDir, date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title);
+// Create new post
+const templateMd = fs.readFileSync(path.join("public", "template.md"), "utf8");
+app.post("/api/new", express.json(), (req, res) => {
+	const parsed = z.object({ title: z.string(), date: z.iso.date() }).safeParse(req.body);
+	if (!parsed.success) return res.sendStatus(400);
+	const body = parsed.data;
+	const date = moment(body.date);
+	const title = body.title.split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
+	const dir = path.join(dataDir, date.format("YYYY/MM/DD"), title);
 	fs.mkdirSync(dir, { recursive: true });
-	if (!fs.existsSync(path.join(dir, "index.html"))) {
-		fs.cpSync(path.join("public", "template.html"), path.join(dir, "index.html"));
-		const content = fs.readFileSync(path.join(dir, "index.html"), { encoding: "utf8" });
-		fs.writeFileSync(path.join(dir, "index.html"), content
-			.replace(/{date}/g, `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`)
-			.replace(/{title}/g, req.body.title)
+	if (!fs.existsSync(path.join(dir, "index.md"))) {
+		fs.writeFileSync(path.join(dir, "index.md"), templateMd
+			.replace(/{date}/g, date.format("YYYY-MM-DD"))
+			.replace(/{title}/g, body.title)
 		);
 		// hidden by default
 		fs.writeFileSync(path.join(dir, ".hidden"), "");
 	}
-	res.json({ url: `/edit/${[date.getFullYear().toString(), (date.getMonth() + 1).toString().padStart(2, "0"), date.getDate().toString().padStart(2, "0"), title].join("/")}` });
+	res.send(`/edit/${date.format("YYYY/MM/DD")}/${title}`);
 });
 
+// Get file list
 app.get("/api/edit/:year/:month/:day/:post/files", (req, res) => {
 	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
 		res.sendStatus(404);
 		return;
 	}
-	const files: { name: string, type: "txt" | "bin" }[] = [];
-	for (const file of fs.readdirSync(dir)) {
-		if (isTextPath(path.join(dir, file))) files.push({ name: file, type: "txt" });
-		else files.push({ name: file, type: "bin" });
-	}
-	res.json(files);
+	res.send(fs.readdirSync(dir).join("\n"));
 });
 
-app.post("/api/edit/:year/:month/:day/:post/new", (req, res) => {
-	if (!req.body?.name) {
+// Get file content
+app.get("/api/edit/:year/:month/:day/:post/file/:file", (req, res) => {
+	const file = path.join(__dirname , "..", dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
+	if (!fs.existsSync(file)) res.sendStatus(404);
+	else res.sendFile(file);
+});
+
+// Upload a file
+app.post("/api/edit/:year/:month/:day/:post/file/:name", express.raw(), (req, res) => {
+	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
+	// Check if overwrite
+	if (fs.existsSync(path.join(dir, req.params.name))) {
 		res.sendStatus(400);
 		return;
 	}
-	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.body.name);
-	if (!fs.existsSync(file)) fs.createWriteStream(file).end();
+	// Write file
+	fs.writeFileSync(path.join(dir, req.params.name), req.body);
 	res.sendStatus(200);
 });
 
-app.post("/api/edit/:year/:month/:day/:post/rename", (req, res) => {
-	if (!req.body?.name) {
-		res.sendStatus(400);
+// Rename a file
+app.patch("/api/edit/:year/:month/:day/:post/file/:name", express.text(), (req, res) => {
+	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
+	// Check if exists
+	if (!fs.existsSync(path.join(dir, req.params.name))) return res.sendStatus(404);
+	// Rename file
+	fs.renameSync(path.join(dir, req.params.name), req.body);
+	res.sendStatus(200);
+});
+
+// Delete a file
+app.delete("/api/edit/:year/:month/:day/:post/file/:file", (req, res) => {
+	if (req.params.file == ".hidden") return res.sendStatus(400);
+	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
+	if (!fs.existsSync(file)) {
+		res.sendStatus(404);
 		return;
 	}
+	fs.rmSync(file);
+	res.sendStatus(200);
+});
+
+// Save main markdown file of post
+app.post("/api/edit/:year/:month/:day/:post/save", express.text(), (req, res) => {
+	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, "index.md");
+	fs.writeFileSync(file, req.body);
+	res.sendStatus(200);
+});
+
+// Rename post and path
+app.patch("/api/edit/:year/:month/:day/:post/rename", express.text(), (req, res) => {
 	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
 		res.sendStatus(404);
 		return;
 	}
-	const title = (req.body.name as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
+	const title = (req.body as string).split(" ").slice(0, 5).join("-").replace(/[^a-z0-9-]/gi, "").toLowerCase();
 	fs.renameSync(dir, path.join(dataDir, req.params.year, req.params.month, req.params.day, title));
 	res.send(title);
 });
 
-app.post("/api/edit/:year/:month/:day/:post/upload", (req, res) => {
-	const files = req.body as { name: string, data: string }[];
-	if (!files.length) {
-		res.sendStatus(400);
-		return;
-	}
-	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
-	// Check if overwrite
-	for (const file of files) {
-		if (fs.existsSync(path.join(dir, file.name))) {
-			res.sendStatus(400);
-			return;
-		}
-	}
-	// Write files
-	for (const file of files)
-		fs.writeFileSync(path.join(dir, file.name), file.data, "base64");
-	res.sendStatus(200);
-});
-
+// Publish the post
 app.post("/api/edit/:year/:month/:day/:post/publish", (req, res) => {
 	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	const hiddenFile = path.join(dir, ".hidden");
@@ -138,50 +149,7 @@ app.post("/api/edit/:year/:month/:day/:post/publish", (req, res) => {
 	syncDatabase().then(() => ap).then(({ sync }) => sync(req as unknown as Request)).catch(err => console.error("Failed to sync posts:", err));
 });
 
-app.get("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const file = path.join(__dirname , "..", dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) res.sendStatus(404);
-	else res.sendFile(file);
-});
-
-app.post("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	if (typeof req.body?.code != "string") {
-		res.sendStatus(400);
-		return;
-	}
-	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) {
-		res.sendStatus(404);
-		return;
-	}
-	fs.writeFileSync(file, req.body.code);
-	res.sendStatus(200);
-});
-
-app.patch("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	if (!req.body?.name) {
-		res.sendStatus(400);
-		return;
-	}
-	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) {
-		res.sendStatus(404);
-		return;
-	}
-	fs.renameSync(file, path.join(__dirname , "../data", req.params.year, req.params.month, req.params.day, req.params.post, req.body.name));
-	res.sendStatus(200);
-});
-
-app.delete("/api/edit/:year/:month/:day/:post/:file", (req, res) => {
-	const file = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
-	if (!fs.existsSync(file)) {
-		res.sendStatus(404);
-		return;
-	}
-	fs.rmSync(file);
-	res.sendStatus(200);
-});
-
+// Delete the post
 app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
 	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	if (!fs.existsSync(dir)) {
@@ -192,6 +160,7 @@ app.delete("/api/delete/:year/:month/:day/:post", (req, res) => {
 	res.sendStatus(200);
 });
 
+// Get comment of the post
 app.get("/api/comments/:year/:month/:day/:post", async (req, res) => {
 	const comments = await getCommentsByPostPath(path.join(req.params.year, req.params.month, req.params.day, req.params.post));
 	if (!comments) {
@@ -199,4 +168,8 @@ app.get("/api/comments/:year/:month/:day/:post", async (req, res) => {
 		return;
 	}
 	res.json(comments.map(comment => comment.comments));
+});
+
+app.get("/api/activitypub", (_req, res) => {
+	res.send(apUsername);
 });

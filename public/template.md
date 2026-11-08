@@ -1,0 +1,6 @@
+# {title}
+Date: {date}
+
+## Summary
+
+---
