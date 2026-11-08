@@ -259,6 +259,10 @@ div .ws-container {
 	filter: hue-rotate(120deg);
 }
 
+#comments h1 {
+	margin-bottom: 0;
+}
+
 #comments .name {
 	font-size: 2.5vmax;
 	filter: brightness(125%);
