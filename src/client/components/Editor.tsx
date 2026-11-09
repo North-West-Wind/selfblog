@@ -89,6 +89,11 @@ export default function EditorComponent() {
 				body: name
 			});
 			if (!res.ok) throw new Error("Rename not OK");
+			setFiles(files => {
+				const index = files.findIndex(name => name == file);
+				if (index >= 0) files[index] = name;
+				return Array.from(files.sort());
+			});
 		}, {
 			pending: `Renaming "${file}" to "${name}"...`,
 			success: `Renamed "${file}" to "${name}"`,
@@ -122,6 +127,11 @@ export default function EditorComponent() {
 				headers: { Authorization: await serverHash(passwordRef.current) }
 			});
 			if (!res.ok) throw new Error("Delete not OK");
+			setFiles(files => {
+				const index = files.findIndex(name => name == file);
+				if (index >= 0) files.splice(index, 1);
+				return Array.from(files);
+			});
 		}, {
 			pending: `Deleting "${file}"...`,
 			success: `Deleted ${file}`,
@@ -139,9 +149,7 @@ export default function EditorComponent() {
 					const res = await fetch(`/api${window.location.pathname}/file/${file.name}`, {
 						method: "POST",
 						headers: { Authorization: await serverHash(passwordRef.current), "Content-Type": "application/octet-stream" },
-						body: file.stream(),
-						//@ts-ignore
-						duplex: "half"
+						body: await file.bytes(),
 					});
 					if (!res.ok) throw new Error("Upload not OK");
 				}, {

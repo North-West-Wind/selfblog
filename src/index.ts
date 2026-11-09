@@ -75,8 +75,14 @@ app.get("/edit/:year/:month/:day/:post", (_req, res) => {
 	res.sendFile(path.join(__dirname, "../public", "edit.html"));
 });
 
+app.get("/edit/:year/:month/:day/:post/:file", (req, res) => {
+	const file = path.join(__dirname , "..", dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.file);
+	if (!fs.existsSync(file)) res.sendStatus(404);
+	else res.sendFile(file);
+});
+
 app.get("/delete/:year/:month/:day/:post", (_req, res) => {
-	res.sendFile(path.join(__dirname, "../public", "delete.html"));
+	res.sendFile(path.resolve(dataDir, "../public", "delete.html"));
 });
 
 const HTML = {
