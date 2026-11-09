@@ -63,7 +63,7 @@ a:hover {
 	filter: brightness(80%);
 }
 
-input {
+input:not([type=checkbox]) {
 	font-family: Kanit, Arial, Helvetica, sans-serif;
 	width: 100%;
 	padding: 2vh;

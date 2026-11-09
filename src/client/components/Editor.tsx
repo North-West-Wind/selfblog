@@ -7,6 +7,12 @@ import { useFilePicker } from "use-file-picker";
 import { TargetedKeyboardEvent } from "preact";
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
+import remarkFediverseUser from "remark-fediverse-user";
+import remarkGfm from "remark-gfm";
+import remarkFlexibleMarkers from "remark-flexible-markers";
+import remarkMath from "remark-math";
+import remarkImgLinks from "@pondorasti/remark-img-links";
+import rehypeKatex from "rehype-katex";
 
 export default function EditorComponent() {
 	const passwordRef = useRef("");
@@ -224,8 +230,15 @@ export default function EditorComponent() {
 			</Panel>
 			<Separator />
 			<Panel defaultSize="75%" minSize="50%" style={{ overflowY: "hidden" }}>
-				<MDEditor value={text} onChange={setText} height={null} disabled={!loaded} />
-				<MDEditor.Markdown source={text} style={{ whiteSpace: "pre-wrap" }} />
+				<MDEditor value={text} onChange={setText} height={null} disabled={!loaded} visibleDragbar={false} previewOptions={{
+					remarkPlugins: [
+						remarkFediverseUser,
+						[remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "special" }],
+						remarkMath, remarkGfm,
+						[remarkImgLinks, { absolutePath: window.location.href + "/" }]
+					],
+					rehypePlugins: [rehypeKatex]
+				}} />
 			</Panel>
 		</Group>
 		<ToastContainer

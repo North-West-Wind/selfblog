@@ -9,8 +9,17 @@ import sirv from "sirv";
 import { renderIndexPage } from "./ssr";
 import { incrementVisit } from "./db";
 import { dataDir, debugFlag, donateAbout, port, redirectAbout } from "./constants";
-import { marked } from "marked";
 import { load } from "cheerio";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import rehypeStringify from "rehype-stringify";
+import remarkFediverseUser from "remark-fediverse-user";
+import remarkGfm from "remark-gfm";
+import remarkFlexibleMarkers from "remark-flexible-markers";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import remarkImgLinks from "@pondorasti/remark-img-links";
 
 fs.mkdirSync(dataDir, { recursive: true });
 
@@ -27,14 +36,24 @@ app.get("/p/latest", (_req, res) => {
 	res.redirect(`/p/${path.relative(dataDir, post.dir)}`);
 });
 
-const templateHtml = fs.readFileSync("public/template.html", "utf8");
+const templateHtml = fs.readFileSync("public/post.html", "utf8");
 app.get("/p/:year/:month/:day/:post", async (req, res) => {
 	const relDir = path.join(req.params.year, req.params.month, req.params.day, req.params.post);
 	const mdFile = path.join(dataDir, relDir, "index.md");
 	if (fs.existsSync(mdFile)) {
 		if (!fs.existsSync(path.join(dataDir, relDir, ".hidden")) && req.headers["sec-fetch-dest"] != "iframe")
 			await incrementVisit(relDir);
-		const html = await marked.parse(fs.readFileSync(mdFile, "utf8"));
+		const html = String(unified()
+			.use(remarkParse)
+			.use(remarkFediverseUser)
+			.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "special" })
+			.use(remarkMath)
+			.use(remarkGfm)
+			.use(remarkImgLinks, { absolutePath: `${req.protocol}://${req.host}${req.path}/` })
+			.use(remarkRehype)
+			.use(rehypeKatex)
+			.use(rehypeStringify)
+			.processSync(fs.readFileSync(mdFile, "utf8")));
 		const $ = load(html);
 		const title = $("h1").first().remove().text();
 		const date = $("p").first().remove().text().replace("Date: ", "");
