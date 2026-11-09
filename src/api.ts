@@ -8,6 +8,7 @@ import { apUsername, dataDir, password } from "./constants";
 import { getCommentsByPostPath, syncDatabase } from "./db";
 import moment from "moment";
 import z from "zod";
+import { pipeline } from "stream/promises";
 
 const ap = import("./activitypub");
 
@@ -82,15 +83,15 @@ app.get("/api/edit/:year/:month/:day/:post/file/:file", (req, res) => {
 });
 
 // Upload a file
-app.post("/api/edit/:year/:month/:day/:post/file/:name", express.raw(), (req, res) => {
-	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
+app.post("/api/edit/:year/:month/:day/:post/file/:name", async (req, res) => {
+	const filePath = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post, req.params.name);
 	// Check if overwrite
-	if (fs.existsSync(path.join(dir, req.params.name))) {
+	if (fs.existsSync(filePath)) {
 		res.sendStatus(400);
 		return;
 	}
-	// Write file
-	fs.writeFileSync(path.join(dir, req.params.name), req.body);
+	const writeStream = fs.createWriteStream(filePath);
+	await pipeline(req, writeStream);
 	res.sendStatus(200);
 });
 

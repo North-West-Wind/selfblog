@@ -63,23 +63,18 @@ export default function EditorComponent() {
 	const reload = useCallback(() => {
 		if (!passwordRef.current) return;
 		toast.promise(async () => {
-			const res = await fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: await serverHash(passwordRef.current) } });
+			let res = await fetch(`/api${window.location.pathname}/files`, { headers: { Authorization: await serverHash(passwordRef.current) } });
 			if (!res.ok) throw new Error("Reload not OK");
 			setFiles((await res.text()).split("\n"));
-		}, {
-			pending: "Reloading file list...",
-			success: "Reloaded file list",
-			error: "Failed to reload file list!"
-		});
-		toast.promise(async () => {
-			const res = await fetch(`/api${window.location.pathname}/file/index.md`);
+
+			res = await fetch(`/api${window.location.pathname}/file/index.md`);
 			if (!res.ok) throw new Error("Load markdown not OK");
 			setText(await res.text());
 			setLoaded(true);
 		}, {
-			pending: "Loading main markdown...",
-			success: "Loaded main markdown",
-			error: "Failed to load main markdown"
+			pending: "Reloading files...",
+			success: "Reloaded files",
+			error: "Failed to reload files!"
 		});
 	}, []);
 
@@ -140,12 +135,13 @@ export default function EditorComponent() {
 		if (!plainFiles.length) return;
 		(async () => {
 			for (const file of plainFiles) {
-				const data = await file.bytes();
 				await toast.promise(async () => {
 					const res = await fetch(`/api${window.location.pathname}/file/${file.name}`, {
 						method: "POST",
 						headers: { Authorization: await serverHash(passwordRef.current), "Content-Type": "application/octet-stream" },
-						body: data
+						body: file.stream(),
+						//@ts-ignore
+						duplex: "half"
 					});
 					if (!res.ok) throw new Error("Upload not OK");
 				}, {
