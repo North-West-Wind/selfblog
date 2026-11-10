@@ -20,6 +20,7 @@ import remarkFlexibleMarkers from "remark-flexible-markers";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import remarkImgLinks from "@pondorasti/remark-img-links";
+import rehypeWrapSibling from "rehype-wrap-sibling";
 
 fs.mkdirSync(dataDir, { recursive: true });
 
@@ -52,6 +53,7 @@ app.get("/p/:year/:month/:day/:post", async (req, res) => {
 			.use(remarkImgLinks, { absolutePath: `${req.protocol}://${req.host}${req.path}/` })
 			.use(remarkRehype)
 			.use(rehypeKatex)
+			.use(rehypeWrapSibling, { wrapper: "div.flex.hcenter", selector: "img" })
 			.use(rehypeStringify)
 			.processSync(fs.readFileSync(mdFile, "utf8")));
 		const $ = load(html);

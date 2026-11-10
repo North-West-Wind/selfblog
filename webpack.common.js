@@ -8,6 +8,8 @@ module.exports = {
     nav: "./src/client/pages/nav.tsx",
     "404": "./src/client/pages/404.tsx",
     delete: "./src/client/pages/delete.tsx",
+
+		post: "./src/client/scripts/post.ts"
   },
   module: {
     rules: [
@@ -43,7 +45,8 @@ module.exports = {
 		},
   },
   output: {
-    filename: "[name].bundle.js",
+    filename: "[name].js",
     path: path.resolve(__dirname, "public/bundle"),
+		clean: true
   },
 };
