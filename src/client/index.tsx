@@ -8,17 +8,6 @@ import { useState } from "preact/compat";
 import WebStamp from "web-stamp";
 
 const App = (props: { latest?: string, posts?: Post[] }) => {
-	if (!props.latest || !props.posts) {
-		// read from body data
-		const data = document.body.getAttribute("data");
-		if (data)
-			try {
-				const json = JSON.parse(Base64.decode(data));
-				props.latest = json.latest;
-				props.posts = json.posts;
-			} catch (err) {}
-	}
-
 	const vertical = useVertical();
 	const [stampOpened, setStampOpened] = useState(false);
 
@@ -49,6 +38,18 @@ const App = (props: { latest?: string, posts?: Post[] }) => {
 	</>;
 };
 
-if (globalThis.document) hydrate(<App />, document.getElementById("app")!);
+if (globalThis.document) {
+	// read from body data
+	const data = document.body.getAttribute("data");
+	let json: { latest: string, posts: Post[] } | undefined;
+	if (data)
+		try {
+			json = JSON.parse(Base64.decode(data));
+		} catch (err) {
+			console.error("Failed to parse body data");
+			console.error(err);
+		}
+	hydrate(<App latest={json?.latest} posts={json?.posts} />, document.getElementById("app")!);
+}
 
 export default App;
