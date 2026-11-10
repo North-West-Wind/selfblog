@@ -24,19 +24,7 @@ if (globalThis.location?.pathname.startsWith("/p/")) {
 	createRoot(div).render(<Comments />);
 }
 
-if (globalThis.document) {
-	const observer = new MutationObserver((list) => {
-	  if (list.some(mutation => mutation.type === "attributes" && mutation.attributeName === "formatia")) {
-	    hydrate(<NavBar />, document.getElementById("nav")!);
-			const comments = document.getElementById("comments");
-			if (comments) hydrate(<Comments />, comments);
-	    observer.disconnect();
-	  }
-	});
-
-	observer.observe(document.body, { attributes: true });
-
+if (globalThis.document)
 	hydrate(<NavBar />, document.getElementById("nav")!);
-}
 
 export default NavBar;

@@ -47,7 +47,7 @@ app.get("/p/:year/:month/:day/:post", async (req, res) => {
 		const html = String(unified()
 			.use(remarkParse)
 			.use(remarkFediverseUser)
-			.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "special" })
+			.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "colored-2" })
 			.use(remarkMath)
 			.use(remarkGfm)
 			.use(remarkImgLinks, { absolutePath: `${req.protocol}://${req.host}${req.path}/` })

@@ -233,7 +233,7 @@ export default function EditorComponent() {
 				<MDEditor value={text} onChange={setText} height={null} disabled={!loaded} visibleDragbar={false} previewOptions={{
 					remarkPlugins: [
 						remarkFediverseUser,
-						[remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "special" }],
+						[remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "colored-2" }],
 						remarkMath, remarkGfm,
 						[remarkImgLinks, { absolutePath: window.location.href + "/" }]
 					],
