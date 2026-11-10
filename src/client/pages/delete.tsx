@@ -1,25 +1,25 @@
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { timeHash } from "../helper";
+import { serverHash } from "../helper";
 
 const DeletePage: React.FC = () => {
 	const pwRef = useRef<HTMLInputElement>(null);
 	const [year, month, day, title] = window.location.pathname.slice(8).split("/");
-	function answer(ans: boolean) {
+	const answer = useCallback(async (ans: boolean) => {
 		if (ans) {
 			if (!pwRef.current) return;
 			if (!pwRef.current.value) pwRef.current.style.borderColor = "#ff0000";
 			else {
 				fetch(`/api/delete/${year}/${month}/${day}/${title}`, {
 					method: "DELETE",
-					headers: { Authorization: timeHash(pwRef.current.value) }
+					headers: { Authorization: await serverHash(pwRef.current.value) }
 				}).then(res => {
 					if (res.ok) window.location.pathname = "/";
 					else if (res.status === 400) pwRef.current!.style.borderColor = "#ff0000";
 				})
 			}
 		} else window.location.pathname = "/";
-	}
+	}, []);
 
 	return <div style={{ textAlign: "center" }}>
 		<h1>Hold it!</h1>
