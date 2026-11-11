@@ -18,9 +18,10 @@ for (const year of fs.readdirSync(dataDir).filter(dir => fs.statSync(path.join(d
 				console.log(`Converting ${year}/${month}/${day}/${post}...`);
 				const $ = load(fs.readFileSync(path.join(postPath, "index.html")));
 				const body = $("body");
-				const title = body.find("h1").first().remove().text();
-				const summary = NodeHtmlMarkdown.translate(body.find("p.p-summary").first().remove().html()!);
-				body.find("h2").first().remove();
+				const title = body.find("h1").first().remove().text(); // title
+				const summaryHtml = body.find("p.p-summary").first().remove().html(); // summary
+				const summary = summaryHtml ? NodeHtmlMarkdown.translate(summaryHtml) : undefined;
+				body.find("h2").first().remove(); // date
 				const markdown = NodeHtmlMarkdown.translate(body.html()!);
 				const writeStream = fs.createWriteStream(path.join(postPath, "index.md"), "utf8");
 				writeStream.write(`# ${title}\n`);

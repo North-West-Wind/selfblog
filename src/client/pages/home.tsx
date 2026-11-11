@@ -1,17 +1,19 @@
-import { Post } from "../../util";
 import LatestPostComponent from "../components/LatestPost";
 import MorePostsComponent from "../components/MorePosts";
 import useVertical from "../hooks/useVertical";
-import { useState } from "preact/compat";
+import { useContext, useState } from "preact/compat";
 import WebStamp from "web-stamp";
+import { DataContext } from "../data";
 
-export default function Home(props: { latest?: string, posts?: Post[] }) {
+export default function HomePage() {
+	const context = useContext(DataContext);
+
 	const vertical = useVertical();
 	const [stampOpened, setStampOpened] = useState(false);
 
 	const openStamp = () => setStampOpened(true);
 
-  return <>
+	return <>
 		<div className="flex" style={{ marginTop: "calc(max(2vw, 4vh) + 4vh)" }}>
 			<div style={{ textAlign: vertical ? "center" : "left", width: vertical ? "100%" : "auto" }}>
 				<div class="flex hcenter vcenter">
@@ -30,8 +32,8 @@ export default function Home(props: { latest?: string, posts?: Post[] }) {
 			<img src="/assets/icon.gif" style={{ borderRadius: "50%", aspectRatio: "1/1", width: "50vw", height: "50vw" }} />
 		</div>}
 
-		<LatestPostComponent latest={props.latest} />
-		<MorePostsComponent posts={props.posts} />
+		<LatestPostComponent latest={context?.latest} />
+		<MorePostsComponent posts={context?.posts} />
 		{stampOpened && <WebStamp src="/assets/stamp.svg" onClose={() => setStampOpened(false)} />}
 	</>;
 }

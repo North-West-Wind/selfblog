@@ -1,9 +1,12 @@
-import React, { useCallback, useRef } from "react";
+import  { useCallback, useRef } from "react";
 import { serverHash } from "../helper";
+import { useLocation } from "preact-iso";
 
 export default function DeletePage() {
+	const { path } = useLocation();
+
 	const pwRef = useRef<HTMLInputElement>(null);
-	const [year, month, day, title] = window.location.pathname.slice(8).split("/");
+	const [year, month, day, title] = path.slice(8).split("/");
 	const answer = useCallback(async (ans: boolean) => {
 		if (ans) {
 			if (!pwRef.current) return;
@@ -23,7 +26,7 @@ export default function DeletePage() {
 	return <div style={{ textAlign: "center" }}>
 		<h1>Hold it!</h1>
 		<h3>You are about to delete</h3>
-		<h2 style={{ margin: 0 }}><a href={window.location.pathname.replace("/delete", "/p")} target="post">{`${year}/${month}/${day} - ${title}`}</a></h2>
+		<h2 style={{ margin: 0 }}><a href={path.replace("/delete", "/p")} target="post">{`${year}/${month}/${day} - ${title}`}</a></h2>
 		<h3>Are you sure?</h3>
 		<div className="flex hcenter"><input type="password" id="pw" placeholder="Password..." ref={pwRef} style={{ width: "50%" }} /></div>
 		<div className="flex hcenter">

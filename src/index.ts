@@ -6,7 +6,7 @@ import * as path from "path";
 import { generateFeed, generateLatest, generatePostArray, postIterator } from "./util";
 import compression from "compression";
 import sirv from "sirv";
-import { renderIndexPage } from "./ssr";
+import { renderDeletePage, renderIndexPage, renderPostPage } from "./ssr";
 import { incrementVisit } from "./db";
 import { dataDir, debugFlag, donateAbout, port, redirectAbout } from "./constants";
 import { load } from "cheerio";
@@ -37,38 +37,16 @@ app.get("/p/latest", (_req, res) => {
 	res.redirect(`/p/${path.relative(dataDir, post.dir)}`);
 });
 
-const templateHtml = fs.readFileSync("public/post.html", "utf8");
 app.get("/p/:year/:month/:day/:post", async (req, res) => {
 	const relDir = path.join(req.params.year, req.params.month, req.params.day, req.params.post);
 	const mdFile = path.join(dataDir, relDir, "index.md");
+	let html: string;
 	if (fs.existsSync(mdFile)) {
 		if (!fs.existsSync(path.join(dataDir, relDir, ".hidden")) && req.headers["sec-fetch-dest"] != "iframe")
 			await incrementVisit(relDir);
-		const html = String(unified()
-			.use(remarkParse)
-			.use(remarkFediverseUser)
-			.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "colored-2" })
-			.use(remarkMath)
-			.use(remarkGfm)
-			.use(remarkImgLinks, { absolutePath: `${req.protocol}://${req.host}${req.path}/` })
-			.use(remarkRehype)
-			.use(rehypeKatex)
-			.use(rehypeWrapSibling, { wrapper: "div.flex.hcenter", selector: "img" })
-			.use(rehypeStringify)
-			.processSync(fs.readFileSync(mdFile, "utf8")));
-		const $ = load(html);
-		const title = $("h1").first().remove().text();
-		const date = $("p").first().remove().text().replace("Date: ", "");
-		const h2 = $("h2").first();
-		const summary = h2.next("p").remove().text().trim() || "";
-		h2.remove();
-		$("hr").first().remove();
-		res.send(templateHtml
-			.replace(/{title}/g, title)
-			.replace(/{date}/g, date)
-			.replace(/{summary}/, summary)
-			.replace(/{content}/, $.html()));
-	} else res.sendFile(path.join(__dirname, "../public/errors/404.html"));
+		html = await renderPostPage(req.path, fs.readFileSync(mdFile, "utf8"));
+	} else html = await renderPostPage(req.path);
+	res.send(html);
 });
 
 app.get("/p/:year/:month/:day/:post/:file", (req, res) => {
@@ -102,16 +80,12 @@ app.get("/edit/:year/:month/:day/:post/:file", (req, res) => {
 	else res.sendFile(file);
 });
 
-app.get("/delete/:year/:month/:day/:post", (_req, res) => {
-	res.sendFile(path.resolve(dataDir, "../public", "delete.html"));
+app.get("/delete/:year/:month/:day/:post", async (_req, res) => {
+	res.send(await renderDeletePage());
 });
 
-const HTML = {
-	index: fs.readFileSync("./public/index.html", "utf8"),
-}
-
 app.get("/", async (_req, res) => {
-	res.send(renderIndexPage(HTML.index, generateLatest(), await generatePostArray()));
+	res.send(renderIndexPage(generateLatest(), await generatePostArray()));
 });
 
 const server = app.listen(port, () => {

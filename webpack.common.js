@@ -3,12 +3,6 @@ const path = require("path");
 module.exports = {
   entry: {
     main: "./src/client/index.tsx",
-    new: "./src/client/pages/new.tsx",
-    edit: "./src/client/pages/edit.tsx",
-    nav: "./src/client/pages/nav.tsx",
-    "404": "./src/client/pages/404.tsx",
-    delete: "./src/client/pages/delete.tsx",
-
 		post: "./src/client/scripts/post.ts"
   },
   module: {

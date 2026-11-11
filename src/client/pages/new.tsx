@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { serverHash } from "../helper";
 
-export default function New() {
+export default function NewPage() {
 	const [title, setTitle] = useState("");
 	const [date, setDate] = useState((() => {
 		const d = new Date();

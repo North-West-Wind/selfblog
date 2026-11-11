@@ -1,39 +1,36 @@
 import { hydrate } from "preact";
-import { Post } from "../util";
-import { Base64 } from "js-base64";
 import { ErrorBoundary, lazy, LocationProvider, Route, Router } from "preact-iso";
-import Home from "./pages/home";
+import HomePage from "./pages/home";
+import NavBar from "./pages/nav";
+import { DataContext, ServerData } from "./data";
 
 const PostPage = lazy(() => import("./pages/post"));
-const New = lazy(() => import("./pages/new"));
-const Delete = lazy(() => import("./pages/delete"));
+const NewPage = lazy(() => import("./pages/new"));
+const DeletePage = lazy(() => import("./pages/delete"));
+const NotFoundPage = lazy(() => import("./pages/not-found"));
 
-const App = (props: { latest?: string, posts?: Post[] }) => {
+const App = (props: { data?: ServerData }) => {
 	
-	return <LocationProvider>
-		<ErrorBoundary>
-			<Router>
-				<Route path="/" component={Home} latest={props.latest} posts={props.posts} />
-				<Route path="/p/:year/:month/:day/:post" component={PostPage} />
-				<Route path="/new" component={New} />
-				<Route path="/delete/:year/:month/:day/:post" component={Delete} />
-			</Router>
-		</ErrorBoundary>
-	</LocationProvider>
+	return <>
+		<NavBar />
+		<DataContext value={props.data}>
+			<LocationProvider>
+				<ErrorBoundary>
+					<Router>
+						<Route path="/" component={HomePage} />
+						<Route path="/p/:year/:month/:day/:post" component={PostPage} />
+						<Route path="/new" component={NewPage} />
+						<Route path="/delete/:year/:month/:day/:post" component={DeletePage} />
+						<Route default component={NotFoundPage} />
+					</Router>
+				</ErrorBoundary>
+			</LocationProvider>
+		</DataContext>
+	</>;
 };
 
 if (globalThis.document) {
-	// read from body data
-	const data = document.body.getAttribute("data");
-	let json: { latest: string, posts: Post[] } | undefined;
-	if (data)
-		try {
-			json = JSON.parse(Base64.decode(data));
-		} catch (err) {
-			console.error("Failed to parse body data");
-			console.error(err);
-		}
-	hydrate(<App latest={json?.latest} posts={json?.posts} />, document.getElementById("app")!);
+	hydrate(<App data={window.pageData} />, document.getElementById("app")!);
 }
 
 export default App;
