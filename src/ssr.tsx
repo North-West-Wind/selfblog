@@ -74,7 +74,7 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		.use(rehypeWrapSibling, { wrapper: "div.img-grid", selector: "img" })
 		.use(rehypeSurroundedText, { surrounders: [['"', '"']] })
 		.use(rehypeSurroundedText, { surrounders: [['(', ')']], className: "dimmed" })
-		.use(rehypeStringify)
+		.use(rehypeStringify, { allowDangerousCharacters: true, allowDangerousHtml: true })
 		.processSync(content);
 	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);
 	const replaced = indexHtml
