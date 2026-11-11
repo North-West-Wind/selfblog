@@ -5,10 +5,9 @@ import { AddressInfo } from "net";
 import * as path from "path";
 import { generateFeed, generateLatest, generatePostArray, postIterator } from "./util";
 import compression from "compression";
-import sirv from "sirv";
 import { renderDeletePage, renderEditPage, renderIndexPage, renderNewPage, renderPostPage } from "./ssr";
 import { incrementVisit } from "./db";
-import { dataDir, debugFlag, donateAbout, port, redirectAbout } from "./constants";
+import { dataDir, donateAbout, port, redirectAbout } from "./constants";
 
 fs.mkdirSync(dataDir, { recursive: true });
 
@@ -16,7 +15,7 @@ const app = express();
 export { app };
 
 app.use(compression());
-app.use("/", sirv("./public", { extensions: [], dev: debugFlag }));
+app.use(express.static(path.resolve("./public"), { extensions: [] }));
 
 import("./api");
 

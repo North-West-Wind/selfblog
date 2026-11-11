@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import fs from "fs";
 import renderToString from "preact-render-to-string";
 import remarkFediverseUser from "remark-fediverse-user";
 import remarkGfm from "remark-gfm";
@@ -20,10 +19,10 @@ import NewPage from "./client/pages/new";
 import DeletePage from "./client/pages/delete";
 import NotFoundPage from "./client/pages/not-found";
 import { baseUrl } from "./constants";
+import indexHtml from "./assets/index.html";
 
 const cache = new Map<string, { hash: string, html: string }>();
 
-const indexHtml = fs.readFileSync("public/index.html", "utf8");
 export function renderIndexPage(latest: string, posts: Post[]) {
 	const hasher = crypto.createHash("md5");
 	hasher.update(latest);

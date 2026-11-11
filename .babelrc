@@ -5,6 +5,6 @@
 	],
 	"plugins": [
 		["@babel/plugin-transform-react-jsx", { "runtime": "automatic", "importSource": "preact" }],
-		["babel-plugin-inline-import", { "extensions": [".md"] }]
+		["babel-plugin-inline-import", { "extensions": [".md", ".html"] }]
 	]
 }
