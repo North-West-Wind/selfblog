@@ -62,7 +62,7 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 	const [meta, content] = markdown.split(/^-{3,}$/m, 2);
 	const title = meta.match(/^#\s+(.+)$/m)?.[1];
 	const date = meta.match(/^Date: (\d{4}[/-]\d{2}[/-]\d{2})$/m)?.[1];
-	const summary = meta.split(/^#+\s+Summary\s*$/m, 2)[1].replace(/  $/m, "\n");
+	const summary = meta.split(/^#+\s+Summary\s*$/m, 2)?.[1]?.replace(/  $/m, "\n");
 	const rendered = unified()
 		.use(remarkParse)
 		.use(remarkFediverseUser)
