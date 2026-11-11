@@ -11,7 +11,7 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeWrapSibling from "rehype-wrap-sibling";
 import rehypeStringify from "rehype-stringify";
-import rehypeQuotedText from "./plugins/rehype-quoted-text";
+import rehypeSurroundedText from "./plugins/rehype-surrounded-text";
 import { Post } from "./util";
 import HomePage from "./client/pages/home";
 import PostPage from "./client/pages/post";
@@ -72,7 +72,8 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		.use(remarkRehype)
 		.use(rehypeKatex)
 		.use(rehypeWrapSibling, { wrapper: "div.img-grid", selector: "img" })
-		.use(rehypeQuotedText)
+		.use(rehypeSurroundedText, { surrounders: [['"', '"']] })
+		.use(rehypeSurroundedText, { surrounders: [['(', ')']], className: "dimmed" })
 		.use(rehypeStringify)
 		.processSync(content);
 	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);

@@ -12,14 +12,27 @@ const REGEXES = [
   return new RegExp(`${o}([^\\n]*?)${c}`, "g");
 });
 
+type RehypeSurroundedTextOptions = {
+	className?: string,
+	tagName?: string,
+	surrounders: [string, string][]
+}
+
 type Segment =
   | { type: "text"; value: string }
   | { type: "quoted"; value: string };
 
-const rehypeQuotedText: Plugin<[], Root> = () => {
-  const className = "quoted";
-  const tagName = "span";
+const rehypeSurroundedText: Plugin<[RehypeSurroundedTextOptions], Root> = (options) => {
+	const {
+	  className = "quoted",
+	  tagName = "span"
+	} = options;
   const skipTags = ["code", "pre", "script", "style"];
+	const regexes = options.surrounders.map(([open, close]) => {
+	  const o = open.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	  const c = close.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	  return new RegExp(`${o}([^\\n]*?)${c}`, "g");
+	});
 
   return (tree: Root) => {
     visit(tree, "element", (node: Element) => {
@@ -41,7 +54,7 @@ const rehypeQuotedText: Plugin<[], Root> = () => {
           continue;
         }
 
-        const segments = splitQuoted(child.value);
+        const segments = splitQuoted(child.value, regexes);
         if (segments.length === 1 && segments[0].type === "text") {
           newChildren.push(child);
           continue;
@@ -72,14 +85,14 @@ const rehypeQuotedText: Plugin<[], Root> = () => {
   };
 };
 
-function splitQuoted(text: string): Segment[] {
+function splitQuoted(text: string, regexes: RegExp[]): Segment[] {
   const out: Segment[] = [];
   let rest = text;
 
   while (rest.length > 0) {
     let best: { start: number; end: number; inner: string; full: string } | null = null;
 
-    for (const re of REGEXES) {
+    for (const re of regexes) {
       re.lastIndex = 0;
       const m = re.exec(rest);
       if (m && (best === null || m.index < best.start)) {
@@ -110,4 +123,4 @@ function splitQuoted(text: string): Segment[] {
   return out;
 }
 
-export default rehypeQuotedText;
+export default rehypeSurroundedText;

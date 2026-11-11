@@ -297,6 +297,10 @@ span.highlight {
 	filter: hue-rotate(180deg);
 }
 
+span.dimmed {
+	filter: grayscale() brightness(80%);
+}
+
 article img {
 	max-width: 80vw;
 }

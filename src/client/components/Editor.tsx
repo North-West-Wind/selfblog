@@ -13,7 +13,7 @@ import remarkFlexibleMarkers from "remark-flexible-markers";
 import remarkMath from "remark-math";
 import remarkImgLinks from "@pondorasti/remark-img-links";
 import rehypeKatex from "rehype-katex";
-import rehypeQuotedText from "../../plugins/rehype-quoted-text";
+import rehypeSurroundedText from "../../plugins/rehype-surrounded-text";
 
 export default function Editor() {
 	const passwordRef = useRef("");
@@ -238,7 +238,11 @@ export default function Editor() {
 						remarkMath, remarkGfm,
 						[remarkImgLinks, { absolutePath: window.location.href + "/" }]
 					],
-					rehypePlugins: [rehypeKatex, rehypeQuotedText]
+					rehypePlugins: [
+						rehypeKatex,
+						[rehypeSurroundedText, { surrounders: [['"', '"']] }],
+						[rehypeSurroundedText, { surrounders: [['(', ')']], className: "dimmed" }]
+					]
 				}} />
 			</Panel>
 		</Group>
