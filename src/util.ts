@@ -1,11 +1,9 @@
 import { Feed } from "@numbered/feed";
-import { load } from "cheerio";
 import * as fs from "fs";
 import * as path from "path";
 import { getVisits } from "./db";
 import { baseUrl, dataDir, feedAuthor, feedAuthorLink, feedCopyright, feedFavicon, feedImage, siteDescription, siteName } from "./constants";
 import moment from "moment";
-import { marked } from "marked";
 
 export type Post = {
 	title: string,
