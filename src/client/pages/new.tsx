@@ -1,8 +1,7 @@
-import { createRoot } from 'react-dom/client';
 import React, { useCallback, useState } from "react";
 import { serverHash } from "../helper";
 
-const NewPage: React.FC = () => {
+export default function New() {
 	const [title, setTitle] = useState("");
 	const [date, setDate] = useState((() => {
 		const d = new Date();
@@ -45,9 +44,3 @@ const NewPage: React.FC = () => {
 		</div>
 	</div>;
 };
-
-createRoot(document.getElementById("app")!).render(
-  <React.StrictMode>
-    <NewPage />
-  </React.StrictMode>
-);

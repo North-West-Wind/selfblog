@@ -1,8 +1,7 @@
 import React, { useCallback, useRef } from "react";
-import { createRoot } from "react-dom/client";
 import { serverHash } from "../helper";
 
-const DeletePage: React.FC = () => {
+export default function DeletePage() {
 	const pwRef = useRef<HTMLInputElement>(null);
 	const [year, month, day, title] = window.location.pathname.slice(8).split("/");
 	const answer = useCallback(async (ans: boolean) => {
@@ -33,9 +32,3 @@ const DeletePage: React.FC = () => {
 		</div>
 	</div>
 }
-
-createRoot(document.getElementById("app")!).render(
-  <React.StrictMode>
-    <DeletePage />
-  </React.StrictMode>
-);
