@@ -66,10 +66,10 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "highlight" })
 		.use(remarkMath)
 		.use(remarkGfm)
-		.use(remarkImgLinks, { absolutePath: `${baseUrl}${path}` })
+		.use(remarkImgLinks, { absolutePath: `${baseUrl}${path}/` })
 		.use(remarkRehype)
 		.use(rehypeKatex)
-		.use(rehypeWrapSibling, { wrapper: "div.flex.hcenter", selector: "img" })
+		.use(rehypeWrapSibling, { wrapper: "div.img-grid", selector: "img" })
 		.use(rehypeQuotedText)
 		.use(rehypeStringify)
 		.processSync(content);
@@ -130,6 +130,7 @@ export function renderNotFoundPage() {
 export function renderEditPage() {
 	if (cache.has("edit")) return cache.get("edit")!.html;
 	const replaced = indexHtml
+		.replace("<!--head-extra-->", `<link rel="stylesheet" href="/editor.css" />`)
 		.replace("{scriptName}", "edit")
 		.replace("{serverData}", "{}");
 	cache.set("edit", {

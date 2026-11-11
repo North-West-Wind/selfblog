@@ -292,3 +292,16 @@ span.quoted {
 span.highlight {
 	filter: hue-rotate(180deg);
 }
+
+.img-grid {
+	display: grid;
+	grid-template-columns: auto auto;
+	gap: 0.5rem;
+}
+
+.img-grid img {
+  width: 100%;
+  height: auto;
+  display: block;
+  min-width: 0;
+}
