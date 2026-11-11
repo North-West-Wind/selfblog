@@ -129,7 +129,6 @@ export function renderNotFoundPage() {
 export function renderEditPage() {
 	if (cache.has("edit")) return cache.get("edit")!.html;
 	const replaced = indexHtml
-		.replace("<!--head-extra-->", `<link rel="stylesheet" href="/editor.css">`)
 		.replace("{scriptName}", "edit")
 		.replace("{serverData}", "{}");
 	cache.set("edit", {

@@ -8,6 +8,7 @@ import { apUsername, dataDir, password } from "./constants";
 import { getCommentsByPostPath, syncDatabase } from "./db";
 import moment from "moment";
 import z from "zod";
+import templateMd from "./assets/template.md";
 
 const ap = import("./activitypub");
 
@@ -44,7 +45,6 @@ app.get("/api/list", async (req, res) => {
 });
 
 // Create new post
-const templateMd = fs.readFileSync(path.join("public", "template.md"), "utf8");
 app.post("/api/new", express.json(), (req, res) => {
 	const parsed = z.object({ title: z.string(), date: z.iso.date() }).safeParse(req.body);
 	if (!parsed.success) return res.sendStatus(400);
