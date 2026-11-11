@@ -7,12 +7,11 @@ import { DatabaseSync } from "node:sqlite";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import { load } from "cheerio";
 import { Temporal } from "@js-temporal/polyfill";
 import { configure, getConsoleSink } from "@logtape/logtape";
 import { apUsername, dataDir, siteDescription, siteName } from "./constants";
 import { addFollower, getPostById, getPosts, getProfile, hostHasFollower, setProfile, deleteFollower, updatePostLastSyncByIds, addComment, getCommentAuthorUrl, updateComment, deleteComment, syncDatabase, getCommentWithPostById } from "./db";
-import { DatabasePost, postsTable } from "./db/schema";
+import { DatabasePost } from "./db/schema";
 
 configure({
   sinks: { console: getConsoleSink() },
@@ -185,20 +184,20 @@ federation.setObjectDispatcher(Article, "/posts/{slug}", async (ctx, { slug }) =
 });
 
 function postToArticle(ctx: Context<unknown>, post: Omit<DatabasePost, "visits">) {
-	const html = fs.readFileSync(path.join(dataDir, post.path, "index.html"), { encoding: "utf8" });
-	const $ = load(html);
-
-	let summary = ($(".p-summary").text() || $("p:first").text()).replace(/\s+/g, " ").replace(/\n/g, " ").trim();
+	const markdown = fs.readFileSync(path.join(dataDir, post.path, "index.md"), { encoding: "utf8" });
+	const [meta, content] = markdown.split(/^-{3,}$/m, 2);
+	const title = meta.match(/^#\s+(.+)$/m)?.[1];
+	let summary = (meta.split(/^#+\s+Summary\s*$/m, 2)?.[1] || content.split("\n\n", 2)[0]).replace(/  $/m, "\n");
 	if (!summary.endsWith(".")) summary += "...";
 	else if (summary.endsWith(".") && !summary.endsWith("...")) summary += "..";
 	const actorUri = ctx.getActorUri(apUsername);
 	return new Article({
 		id: ctx.getObjectUri(Article, { slug: post.id }),
 		attribution: ctx.getActorUri(apUsername!),
-		name: $("title").text(),
+		name: title,
 		summary,
-		content: $(".e-content").html() || $("body").remove("div#nav").html(),
-		mediaType: "text/html",
+		content,
+		mediaType: "text/markdown",
 		url: new URL(`/p/${post.path}`, actorUri.protocol + "//" + actorUri.host),
 		published: Temporal.Instant.from(new Date(post.path.split("/").slice(0, 3).join("/")).toISOString())
 	});
