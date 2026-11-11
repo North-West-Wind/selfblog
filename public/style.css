@@ -147,6 +147,10 @@ div.center {
 	color: var(--bg);
 }
 
+.topbar-filler {
+	padding-top: calc(max(2vw, 4vh) + 4vh - 6vmin);
+}
+
 .sidebar-button {
 	position: fixed;
 	color: var(--fg);

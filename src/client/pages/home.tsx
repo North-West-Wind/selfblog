@@ -16,7 +16,7 @@ export default function HomePage(props: { latest?: string, posts?: Post[] }) {
 
 	return <>
 		<NavBar />
-		<div className="flex" style={{ marginTop: "calc(max(2vw, 4vh) + 4vh)" }}>
+		<div className="flex">
 			<div style={{ textAlign: vertical ? "center" : "left", width: vertical ? "100%" : "auto" }}>
 				<div class="flex hcenter vcenter">
 					<h1>NorthWestBlog</h1>
