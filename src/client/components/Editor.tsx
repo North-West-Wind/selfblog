@@ -14,7 +14,7 @@ import remarkMath from "remark-math";
 import remarkImgLinks from "@pondorasti/remark-img-links";
 import rehypeKatex from "rehype-katex";
 
-export default function EditorComponent() {
+export default function Editor() {
 	const passwordRef = useRef("");
 	const textRef = useRef("");
 	const [loaded, setLoaded] = useState(false);

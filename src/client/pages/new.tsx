@@ -1,5 +1,7 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { serverHash } from "../helper";
+import { hydrate } from "preact";
+import NavBar from "../components/NavBar";
 
 export default function NewPage() {
 	const [title, setTitle] = useState("");
@@ -32,15 +34,20 @@ export default function NewPage() {
 		}
 	}, [title, date, password]);
 
-	return <div style={{ margin: "auto" }}>
-		<h2>Create a new post</h2>
-		<div className="flex"><input type="text" id="title" placeholder="Title..." value={title} onChange={ev => setTitle(ev.currentTarget.value)} /></div>
-		<div className="flex"><input type="date" id="date" value={date} onChange={ev => setDate(ev.currentTarget.value)} /></div>
-		<div className="flex"><input type="password" id="pw" placeholder="Password..." value={password} onChange={ev => setPassword(ev.currentTarget.value)} /></div>
-		<div className="flex hcenter">
-			{createState == 0 && <div className="button" style={{ width: "min-content", marginTop: "2vh" }} onClick={() => create()}>Create</div>}
-			{createState == 1 && <div className="button" style={{ width: "min-content", marginTop: "2vh", filter: "brightness(50%) grayscale()" }}>Creating...</div>}
-			{createState == 2 && <div className="button" style={{ width: "min-content", marginTop: "2vh", filter: "brightness(50%) grayscale()" }}>Created!</div>}
+	return <>
+		<NavBar />
+		<div style={{ margin: "auto" }}>
+			<h2>Create a new post</h2>
+			<div className="flex"><input type="text" id="title" placeholder="Title..." value={title} onChange={ev => setTitle(ev.currentTarget.value)} /></div>
+			<div className="flex"><input type="date" id="date" value={date} onChange={ev => setDate(ev.currentTarget.value)} /></div>
+			<div className="flex"><input type="password" id="pw" placeholder="Password..." value={password} onChange={ev => setPassword(ev.currentTarget.value)} /></div>
+			<div className="flex hcenter">
+				{createState == 0 && <div className="button" style={{ width: "min-content", marginTop: "2vh" }} onClick={() => create()}>Create</div>}
+				{createState == 1 && <div className="button" style={{ width: "min-content", marginTop: "2vh", filter: "brightness(50%) grayscale()" }}>Creating...</div>}
+				{createState == 2 && <div className="button" style={{ width: "min-content", marginTop: "2vh", filter: "brightness(50%) grayscale()" }}>Created!</div>}
+			</div>
 		</div>
-	</div>;
+	</>;
 };
+
+if (globalThis.document) hydrate(<NewPage />, document.getElementById("app")!);

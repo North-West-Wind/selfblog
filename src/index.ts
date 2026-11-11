@@ -6,21 +6,9 @@ import * as path from "path";
 import { generateFeed, generateLatest, generatePostArray, postIterator } from "./util";
 import compression from "compression";
 import sirv from "sirv";
-import { renderDeletePage, renderIndexPage, renderPostPage } from "./ssr";
+import { renderDeletePage, renderEditPage, renderIndexPage, renderNewPage, renderPostPage } from "./ssr";
 import { incrementVisit } from "./db";
 import { dataDir, debugFlag, donateAbout, port, redirectAbout } from "./constants";
-import { load } from "cheerio";
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkRehype from "remark-rehype";
-import rehypeStringify from "rehype-stringify";
-import remarkFediverseUser from "remark-fediverse-user";
-import remarkGfm from "remark-gfm";
-import remarkFlexibleMarkers from "remark-flexible-markers";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import remarkImgLinks from "@pondorasti/remark-img-links";
-import rehypeWrapSibling from "rehype-wrap-sibling";
 
 fs.mkdirSync(dataDir, { recursive: true });
 
@@ -40,12 +28,13 @@ app.get("/p/latest", (_req, res) => {
 app.get("/p/:year/:month/:day/:post", async (req, res) => {
 	const relDir = path.join(req.params.year, req.params.month, req.params.day, req.params.post);
 	const mdFile = path.join(dataDir, relDir, "index.md");
+	const insideFrame = req.headers["sec-fetch-dest"] == "iframe";
 	let html: string;
 	if (fs.existsSync(mdFile)) {
-		if (!fs.existsSync(path.join(dataDir, relDir, ".hidden")) && req.headers["sec-fetch-dest"] != "iframe")
+		if (!fs.existsSync(path.join(dataDir, relDir, ".hidden")) && !insideFrame)
 			await incrementVisit(relDir);
-		html = await renderPostPage(req.path, fs.readFileSync(mdFile, "utf8"));
-	} else html = await renderPostPage(req.path);
+		html = renderPostPage(req.path, insideFrame, fs.readFileSync(mdFile, "utf8"));
+	} else html = renderPostPage(req.path, insideFrame);
 	res.send(html);
 });
 
@@ -67,11 +56,11 @@ app.get("/donate", (_req, res) => {
 });
 
 app.get("/new", (_req, res) => {
-	res.sendFile(path.join(__dirname, "../public", "new.html"));
+	res.send(renderNewPage());
 });
 
 app.get("/edit/:year/:month/:day/:post", (_req, res) => {
-	res.sendFile(path.join(__dirname, "../public", "edit.html"));
+	res.send(renderEditPage());
 });
 
 app.get("/edit/:year/:month/:day/:post/:file", (req, res) => {
@@ -80,8 +69,8 @@ app.get("/edit/:year/:month/:day/:post/:file", (req, res) => {
 	else res.sendFile(file);
 });
 
-app.get("/delete/:year/:month/:day/:post", async (_req, res) => {
-	res.send(await renderDeletePage());
+app.get("/delete/:year/:month/:day/:post", (_req, res) => {
+	res.send(renderDeletePage());
 });
 
 app.get("/", async (_req, res) => {

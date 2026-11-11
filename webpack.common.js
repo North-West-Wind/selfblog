@@ -1,10 +1,15 @@
+const fs = require("fs");
 const path = require("path");
 
+const entry = {};
+fs.readdirSync("./src/client/pages").forEach(file => {
+  if (file.endsWith(".tsx")) {
+    entry[file.slice(0, -4)] = "./" + path.join("./src/client/pages", file);
+  }
+});
+
 module.exports = {
-  entry: {
-    main: "./src/client/index.tsx",
-		post: "./src/client/scripts/post.ts"
-  },
+  entry,
   module: {
     rules: [
       {

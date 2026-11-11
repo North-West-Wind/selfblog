@@ -1,12 +1,13 @@
 import LatestPostComponent from "../components/LatestPost";
 import MorePostsComponent from "../components/MorePosts";
 import useVertical from "../hooks/useVertical";
-import { useContext, useState } from "preact/compat";
+import { useState } from "preact/compat";
 import WebStamp from "web-stamp";
-import { DataContext } from "../data";
+import { hydrate } from "preact";
+import NavBar from "../components/NavBar";
+import { Post } from "../../util";
 
-export default function HomePage() {
-	const context = useContext(DataContext);
+export default function HomePage(props: { latest?: string, posts?: Post[] }) {
 
 	const vertical = useVertical();
 	const [stampOpened, setStampOpened] = useState(false);
@@ -14,6 +15,7 @@ export default function HomePage() {
 	const openStamp = () => setStampOpened(true);
 
 	return <>
+		<NavBar />
 		<div className="flex" style={{ marginTop: "calc(max(2vw, 4vh) + 4vh)" }}>
 			<div style={{ textAlign: vertical ? "center" : "left", width: vertical ? "100%" : "auto" }}>
 				<div class="flex hcenter vcenter">
@@ -32,8 +34,10 @@ export default function HomePage() {
 			<img src="/assets/icon.gif" style={{ borderRadius: "50%", aspectRatio: "1/1", width: "50vw", height: "50vw" }} />
 		</div>}
 
-		<LatestPostComponent latest={context?.latest} />
-		<MorePostsComponent posts={context?.posts} />
+		<LatestPostComponent latest={props.latest} />
+		<MorePostsComponent posts={props.posts} />
 		{stampOpened && <WebStamp src="/assets/stamp.svg" onClose={() => setStampOpened(false)} />}
 	</>;
 }
+
+if (globalThis.document) hydrate(<HomePage latest={window.pageData?.latest} posts={window.pageData?.posts} />, document.getElementById("app")!);

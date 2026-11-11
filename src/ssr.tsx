@@ -1,15 +1,30 @@
 import crypto from "crypto";
 import fs from "fs";
-import App from "./client";
+import renderToString from "preact-render-to-string";
+import remarkFediverseUser from "remark-fediverse-user";
+import remarkGfm from "remark-gfm";
+import remarkFlexibleMarkers from "remark-flexible-markers";
+import remarkMath from "remark-math";
+import remarkImgLinks from "@pondorasti/remark-img-links";
+import rehypeKatex from "rehype-katex";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import rehypeWrapSibling from "rehype-wrap-sibling";
+import rehypeStringify from "rehype-stringify";
+import rehypeQuotedText from "./plugins/rehype-quoted-text";
 import { Post } from "./util";
-import { prerender } from "preact-iso";
-import { locationStub } from "preact-iso/prerender";
-import type { ServerData } from "./client/data";
+import HomePage from "./client/pages/home";
+import PostPage from "./client/pages/post";
+import NewPage from "./client/pages/new";
+import DeletePage from "./client/pages/delete";
+import NotFoundPage from "./client/pages/not-found";
+import { baseUrl } from "./constants";
 
 const cache = new Map<string, { hash: string, html: string }>();
 
 const indexHtml = fs.readFileSync("public/index.html", "utf8");
-export async function renderIndexPage(latest: string, posts: Post[]) {
+export function renderIndexPage(latest: string, posts: Post[]) {
 	const hasher = crypto.createHash("md5");
 	hasher.update(latest);
 	posts.forEach(post => {
@@ -21,10 +36,11 @@ export async function renderIndexPage(latest: string, posts: Post[]) {
 		const cached = cache.get("index")!;
 		if (cached.hash == hash) return cached.html;
 	}
-	locationStub("/");
-	const data: ServerData = { latest, posts };
-	const { html } = await prerender(<App data={data} />);
-	const replaced = indexHtml.replace("{serverData}", JSON.stringify(data)).replace("<!--app-html-->", html);
+	const html = renderToString(<HomePage latest={latest} posts={posts} />);
+	const replaced = indexHtml
+		.replace("{scriptName}", "home")
+		.replace("{serverData}", JSON.stringify({ latest, posts }))
+		.replace("<!--app-html-->", html);
 	cache.set("index", {
 		hash,
 		html: replaced
@@ -32,16 +48,35 @@ export async function renderIndexPage(latest: string, posts: Post[]) {
 	return replaced;
 }
 
-export async function renderPostPage(path: string, markdown?: string) {
-	const hash = crypto.hash("md5", markdown || "");
-	if (cache.has(path)) {
-		const cached = cache.get(path)!;
+export function renderPostPage(path: string, insideFrame: boolean, markdown?: string) {
+	if (!markdown) return renderNotFoundPage();
+	const hash = crypto.hash("md5", markdown);
+	const key = insideFrame ? path + "/iframe" : path;
+	if (cache.has(key)) {
+		const cached = cache.get(key)!;
 		if (cached.hash == hash) return cached.html;
 	}
-	locationStub(path);
-	const data: ServerData = { markdown };
-	const { html } = await prerender(<App data={data} />);
-	const replaced = indexHtml.replace("{serverData}", JSON.stringify(data)).replace("<!--app-html-->", html);
+	const [meta, content] = markdown.split(/^-{3,}$/m, 2);
+	const title = meta.match(/^#\s+(.+)$/m)?.[1];
+	const date = meta.match(/^Date: (\d{4}[/-]\d{2}[/-]\d{2})$/m)?.[1];
+	const summary = meta.split(/^#+\s+Summary\s*$/m, 2)[1].replace(/  $/m, "\n");
+	const rendered = unified()
+		.use(remarkParse)
+		.use(remarkFediverseUser)
+		.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "colored-2" })
+		.use(remarkMath)
+		.use(remarkGfm)
+		.use(remarkImgLinks, { absolutePath: `${baseUrl}${path}` })
+		.use(remarkRehype)
+		.use(rehypeKatex)
+		.use(rehypeWrapSibling, { wrapper: "div.flex.hcenter", selector: "img" })
+		.use(rehypeStringify)
+		.processSync(content);
+	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);
+	const replaced = indexHtml
+		.replace("{scriptName}", "post")
+		.replace("{serverData}", JSON.stringify({ title, date, summary, html: String(rendered), insideFrame }))
+		.replace("<!--app-html-->", html);
 	cache.set(path, {
 		hash,
 		html: replaced
@@ -49,11 +84,13 @@ export async function renderPostPage(path: string, markdown?: string) {
 	return replaced;
 }
 
-export async function renderNewPage() {
+export function renderNewPage() {
 	if (cache.has("new")) return cache.get("new")!.html;
-	locationStub("/new");
-	const { html } = await prerender(<App data={{}} />);
-	const replaced = indexHtml.replace("{serverData}", "{}").replace("<!--app-html-->", html);
+	const html = renderToString(<NewPage />);
+	const replaced = indexHtml
+		.replace("{scriptName}", "new")
+		.replace("{serverData}", "{}")
+		.replace("<!--app-html-->", html);
 	cache.set("new", {
 		hash: "",
 		html: replaced
@@ -61,12 +98,41 @@ export async function renderNewPage() {
 	return replaced;
 }
 
-export async function renderDeletePage() {
+export function renderDeletePage() {
 	if (cache.has("delete")) return cache.get("delete")!.html;
-	locationStub("/delete/y/m/d/p");
-	const { html } = await prerender(<App data={{}} />);
-	const replaced = indexHtml.replace("{serverData}", "{}").replace("<!--app-html-->", html);
+	const html = renderToString(<DeletePage />);
+	const replaced = indexHtml
+		.replace("{scriptName}", "delete")
+		.replace("{serverData}", "{}")
+		.replace("<!--app-html-->", html);
 	cache.set("delete", {
+		hash: "",
+		html: replaced
+	});
+	return replaced;
+}
+
+export function renderNotFoundPage() {
+	if (cache.has("not-found")) return cache.get("not-found")!.html;
+	const html = renderToString(<NotFoundPage />);
+	const replaced = indexHtml
+		.replace("{scriptName}", "not-found")
+		.replace("{serverData}", "{}")
+		.replace("<!--app-html-->", html);
+	cache.set("not-found", {
+		hash: "",
+		html: replaced
+	});
+	return replaced;
+}
+
+export function renderEditPage() {
+	if (cache.has("edit")) return cache.get("edit")!.html;
+	const replaced = indexHtml
+		.replace("<!--head-extra-->", `<link rel="stylesheet" href="/editor.css">`)
+		.replace("{scriptName}", "edit")
+		.replace("{serverData}", "{}");
+	cache.set("edit", {
 		hash: "",
 		html: replaced
 	});

@@ -1,10 +1,7 @@
-import React from "react";
 import NavBarItemsComponent from "./NavBarItems";
 
-const TopBarComponent: React.FC = () => {
-	return <div className="topbar flex">
+export default function TopBar(props: { hidden?: boolean }) {
+	return <div className={"topbar flex" + (props.hidden ? " hidden" : "")}>
 		<NavBarItemsComponent />
 	</div>;
 }
-
-export default TopBarComponent;

@@ -1,21 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import NavBarItemsComponent from "./NavBarItems";
 
-export default class SideBarComponent extends React.Component {
-	state: { opened: boolean };
+export default function SideBar() {
+	const [opened, setOpened] = useState(false);
 
-	constructor(props: object) {
-		super(props);
-		this.state = { opened: false };
-	}
-
-	render() {
-		return <>
-			<div className="sidebar-button" onClick={() => this.setState({ opened: true })}>≡</div>
-			<div className={"sidebar" + (this.state.opened ? "" : " hidden")}>
-				<div className="sidebar-close" onClick={() => this.setState({ opened: false })}>⨯</div>
-				<NavBarItemsComponent sidebar />
-			</div>
-		</>
-	}
+	return <>
+		<div className="sidebar-button" onClick={() => setOpened(true)}>≡</div>
+		<div className={"sidebar" + (opened ? "" : " hidden")}>
+			<div className="sidebar-close" onClick={() => setOpened(false)}>⨯</div>
+			<NavBarItemsComponent sidebar />
+		</div>
+	</>
 }
