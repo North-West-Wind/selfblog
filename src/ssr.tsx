@@ -27,9 +27,12 @@ const indexHtml = fs.readFileSync("public/index.html", "utf8");
 export function renderIndexPage(latest: string, posts: Post[]) {
 	const hasher = crypto.createHash("md5");
 	hasher.update(latest);
+	const bytes = Buffer.alloc(4);
 	posts.forEach(post => {
 		hasher.update(post.title);
 		hasher.update(post.url);
+		bytes.writeUint32LE(post.visits, 0);
+		hasher.update(bytes);
 	});
 	const hash = hasher.digest("hex");
 	if (cache.has("index")) {

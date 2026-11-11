@@ -2,7 +2,6 @@ import { DatabaseSync } from "node:sqlite";
 import { drizzle } from "drizzle-orm/node-sqlite";
 import * as crypto from "crypto";
 import * as fs from "fs";
-import { invalidatePostCache } from "./ssr";
 import { postIterator } from "./util";
 import { DatabaseComment, commentsTable, DatabaseFollower, followersTable, postsTable, profileTable } from "./db/schema";
 import path from "path";
@@ -84,7 +83,6 @@ export async function incrementVisit(relDir: string) {
 	const rows = await db.select({ id: postsTable.id, visits: postsTable.visits }).from(postsTable).where(eq(postsTable.path, relDir)).limit(1);
 	if (!rows.length) return;
 	await db.update(postsTable).set({ visits: rows[0].visits + 1 }).where(eq(postsTable.id, rows[0].id));
-	invalidatePostCache();
 }
 
 export async function getVisits(relDirs: string[]) {
