@@ -75,7 +75,6 @@
     "babel-plugin-inline-import": "^3.0.0",
     "css-loader": "^7.1.4",
     "drizzle-kit": "^1.0.0-beta.22",
-    "htmlfy": "^1.0.1",
     "node-html-markdown": "^2.0.0",
     "nodemon": "^3.1.14",
     "style-loader": "^4.0.0",
