@@ -63,13 +63,14 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 	const rendered = unified()
 		.use(remarkParse)
 		.use(remarkFediverseUser)
-		.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "colored-2" })
+		.use(remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "highlight" })
 		.use(remarkMath)
 		.use(remarkGfm)
 		.use(remarkImgLinks, { absolutePath: `${baseUrl}${path}` })
 		.use(remarkRehype)
 		.use(rehypeKatex)
 		.use(rehypeWrapSibling, { wrapper: "div.flex.hcenter", selector: "img" })
+		.use(rehypeQuotedText)
 		.use(rehypeStringify)
 		.processSync(content);
 	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);

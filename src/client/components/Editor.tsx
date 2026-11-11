@@ -13,6 +13,7 @@ import remarkFlexibleMarkers from "remark-flexible-markers";
 import remarkMath from "remark-math";
 import remarkImgLinks from "@pondorasti/remark-img-links";
 import rehypeKatex from "rehype-katex";
+import rehypeQuotedText from "../../plugins/rehype-quoted-text";
 
 export default function Editor() {
 	const passwordRef = useRef("");
@@ -233,11 +234,11 @@ export default function Editor() {
 				<MDEditor value={text} onChange={setText} height={null} disabled={!loaded} visibleDragbar={false} previewOptions={{
 					remarkPlugins: [
 						remarkFediverseUser,
-						[remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "colored-2" }],
+						[remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "highlight" }],
 						remarkMath, remarkGfm,
 						[remarkImgLinks, { absolutePath: window.location.href + "/" }]
 					],
-					rehypePlugins: [rehypeKatex]
+					rehypePlugins: [rehypeKatex, rehypeQuotedText]
 				}} />
 			</Panel>
 		</Group>

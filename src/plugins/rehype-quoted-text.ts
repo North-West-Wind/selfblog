@@ -1,80 +1,85 @@
-// rehype-quoted-text.js
-import { Root } from 'hast';
-import { Plugin } from 'unified';
-import { visit } from 'unist-util-visit';
+import { SKIP, visit } from "unist-util-visit";
+import type { Plugin } from "unified";
+import type { Root, Element, ElementContent, Text } from "hast";
 
-const QUOTE_PAIRS = [
+const REGEXES = [
   ['"', '"'],
-  ["'", "'"],
-  ['\u201C', '\u201D'], // “ ”
-  ['\u2018', '\u2019'], // ‘ ’
-];
+  ["\u201C", "\u201D"], // “ ”
+  ["\u2018", "\u2019"], // ‘ ’
+].map(([open, close]) => {
+  const o = open.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const c = close.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`${o}([^\\n]*?)${c}`, "g");
+});
 
-type Options = {
-	className: string,
-	tagName: string,
-	keepQuotes: boolean,
-	skipTags: string[]
-};
+type Segment =
+  | { type: "text"; value: string }
+  | { type: "quoted"; value: string };
 
-const rehypeQuotedText: Plugin<[Options], Root> = (options = { className: "quoted", tagName: "span", keepQuotes: true, skipTags: ["code", "pre", "script", "style"] }) => {
-  const { className, tagName, keepQuotes, skipTags } = options;
+const rehypeQuotedText: Plugin<[], Root> = () => {
+  const className = "quoted";
+  const tagName = "span";
+  const skipTags = ["code", "pre", "script", "style"];
 
-  // Build one alternation regex per quote type so we don't mix “ with ' etc.
-  const regexes = QUOTE_PAIRS.map(([open, close]) => {
-    const o = escapeRegExp(open);
-    const c = escapeRegExp(close);
-    // Non-greedy, no newlines inside a quoted string.
-    return new RegExp(`${o}([^\\n]*?)${c}`, 'g');
-  });
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element) => {
+      if (skipTags.includes(node.tagName)) return;
+      if (node.tagName === tagName) {
+        const nodeClassName = node.properties?.className;
+        if (nodeClassName) {
+          if (typeof nodeClassName == "string" && nodeClassName == className) return SKIP;
+          if (Array.isArray(nodeClassName) && nodeClassName.includes(className)) return SKIP;
+        }
+      }
 
-  return (tree: any) => {
-    visit(tree, 'element', (node, index, parent) => {
-      if (!parent || skipTags.includes(node.tagName)) return;
-
-      const newChildren = [];
+      const newChildren: ElementContent[] = [];
       let changed = false;
 
       for (const child of node.children) {
-        if (child.type !== 'text') {
+        if (child.type !== "text") {
           newChildren.push(child);
           continue;
         }
 
-        const segments = splitQuoted(child.value, regexes, keepQuotes);
-        if (segments.length === 1 && segments[0].type === 'text') {
+        const segments = splitQuoted(child.value);
+        if (segments.length === 1 && segments[0].type === "text") {
           newChildren.push(child);
           continue;
         }
 
         changed = true;
         for (const seg of segments) {
-          if (seg.type === 'text') {
-            newChildren.push({ type: 'text', value: seg.value });
+          if (seg.type === "text") {
+            const text: Text = { type: "text", value: seg.value };
+            newChildren.push(text);
           } else {
-            newChildren.push({
-              type: 'element',
+            const wrapper: Element = {
+              type: "element",
               tagName,
               properties: { className: [className] },
-              children: [{ type: 'text', value: seg.value }],
-            });
+              children: [{ type: "text", value: seg.value }],
+            };
+            newChildren.push(wrapper);
           }
         }
       }
 
-      if (changed) node.children = newChildren;
+      if (changed) {
+        node.children = newChildren;
+        return SKIP;
+      }
     });
   };
-}
+};
 
-function splitQuoted(text: string, regexes: RegExp[], keepQuotes: boolean) {
-  // Find earliest match among all quote types, repeatedly.
-  const out = [];
+function splitQuoted(text: string): Segment[] {
+  const out: Segment[] = [];
   let rest = text;
 
   while (rest.length > 0) {
-    let best = null; // { start, end, inner, full }
-    for (const re of regexes) {
+    let best: { start: number; end: number; inner: string; full: string } | null = null;
+
+    for (const re of REGEXES) {
       re.lastIndex = 0;
       const m = re.exec(rest);
       if (m && (best === null || m.index < best.start)) {
@@ -88,25 +93,21 @@ function splitQuoted(text: string, regexes: RegExp[], keepQuotes: boolean) {
     }
 
     if (!best) {
-      out.push({ type: 'text', value: rest });
+      out.push({ type: "text", value: rest });
       break;
     }
 
     if (best.start > 0) {
-      out.push({ type: 'text', value: rest.slice(0, best.start) });
+      out.push({ type: "text", value: rest.slice(0, best.start) });
     }
     out.push({
-      type: 'quoted',
-      value: keepQuotes ? best.full : best.inner,
+      type: "quoted",
+      value: best.full,
     });
     rest = rest.slice(best.end);
   }
 
   return out;
-}
-
-function escapeRegExp(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export default rehypeQuotedText;
