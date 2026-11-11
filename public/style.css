@@ -297,6 +297,10 @@ span.highlight {
 	filter: hue-rotate(180deg);
 }
 
+article img {
+	max-width: 80vw;
+}
+
 .img-grid {
 	display: grid;
 	grid-template-columns: auto auto;
