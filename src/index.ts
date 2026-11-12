@@ -68,8 +68,8 @@ app.get("/edit/:year/:month/:day/:post/:file", (req, res) => {
 	else res.sendFile(file);
 });
 
-app.get("/delete/:year/:month/:day/:post", (_req, res) => {
-	res.send(renderDeletePage());
+app.get("/delete/:year/:month/:day/:post", (req, res) => {
+	res.send(renderDeletePage(req.path));
 });
 
 app.get("/", async (_req, res) => {

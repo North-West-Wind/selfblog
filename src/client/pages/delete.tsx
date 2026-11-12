@@ -3,11 +3,9 @@ import { serverHash } from "../helper";
 import NavBar from "../components/NavBar";
 import { hydrate } from "preact";
 
-export default function DeletePage() {
-	const path = window.location.pathname;
-
+export default function DeletePage(props: { path: string }) {
 	const pwRef = useRef<HTMLInputElement>(null);
-	const [year, month, day, title] = path.slice(8).split("/");
+	const [year, month, day, title] = props.path.slice(8).split("/");
 	const answer = useCallback(async (ans: boolean) => {
 		if (ans) {
 			if (!pwRef.current) return;
@@ -29,7 +27,7 @@ export default function DeletePage() {
 		<div style={{ textAlign: "center" }}>
 			<h1>Hold it!</h1>
 			<h3>You are about to delete</h3>
-			<h2 style={{ margin: 0 }}><a href={path.replace("/delete", "/p")} target="post">{`${year}/${month}/${day} - ${title}`}</a></h2>
+			<h2 style={{ margin: 0 }}><a href={props.path.replace("/delete", "/p")} target="post">{`${year}/${month}/${day} - ${title}`}</a></h2>
 			<h3>Are you sure?</h3>
 			<div className="flex hcenter"><input type="password" id="pw" placeholder="Password..." ref={pwRef} style={{ width: "50%" }} /></div>
 			<div className="flex hcenter">
@@ -40,4 +38,4 @@ export default function DeletePage() {
 	</>;
 }
 
-if (globalThis.document) hydrate(<DeletePage />, document.getElementById("app")!);
+if (globalThis.document) hydrate(<DeletePage path={window.location.pathname} />, document.getElementById("app")!);
