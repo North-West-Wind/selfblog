@@ -69,17 +69,17 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		.use(remarkMath)
 		.use(remarkGfm)
 		.use(remarkImgLinks, { absolutePath: `${baseUrl}${path}/` })
-		.use(remarkRehype)
+		.use(remarkRehype, { allowDangerousHtml: true })
 		.use(rehypeKatex)
 		.use(rehypeWrapSibling, { wrapper: "div.img-grid", selector: "img" })
 		.use(rehypeSurroundedText, { surrounders: [['"', '"']] })
 		.use(rehypeSurroundedText, { surrounders: [['(', ')']], className: "dimmed" })
-		.use(rehypeStringify, { allowDangerousCharacters: true, allowDangerousHtml: true })
+		.use(rehypeStringify, { allowDangerousHtml: true })
 		.processSync(content);
 	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);
 	const replaced = indexHtml
 		.replace("{scriptName}", "post")
-		.replace("{serverData}", JSON.stringify({ title, date, summary, html: String(rendered), insideFrame }))
+		.replace("{serverData}", JSON.stringify({ title, date, summary, html: encodeURIComponent(String(rendered)), insideFrame }))
 		.replace("<!--app-html-->", html);
 	cache.set(path, {
 		hash,
@@ -102,9 +102,9 @@ export function renderNewPage() {
 	return replaced;
 }
 
-export function renderDeletePage() {
+export function renderDeletePage(path: string) {
 	if (cache.has("delete")) return cache.get("delete")!.html;
-	const html = renderToString(<DeletePage />);
+	const html = renderToString(<DeletePage path={path} />);
 	const replaced = indexHtml
 		.replace("{scriptName}", "delete")
 		.replace("{serverData}", "{}")

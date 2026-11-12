@@ -13,4 +13,4 @@ export default function PostPage(props: { title?: string, date?: string, summary
 	</>;
 }
 
-if (globalThis.document) hydrate(<PostPage title={window.pageData?.title} date={window.pageData?.date} summary={window.pageData?.summary} html={window.pageData?.html} />, document.getElementById("app")!);
+if (globalThis.document) hydrate(<PostPage title={window.pageData?.title} date={window.pageData?.date} summary={window.pageData?.summary} html={decodeURIComponent(window.pageData?.html || "")} />, document.getElementById("app")!);
