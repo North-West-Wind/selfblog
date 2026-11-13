@@ -50,7 +50,7 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 	if (id != apUsername) return [];
 	const entry = await kv.get<{ privateKey: JsonWebKey, publicKey: JsonWebKey }>(["key"]);
 	if (!entry?.privateKey || !entry.publicKey) {
-		const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
+		const { privateKey, publicKey } = await generateCryptoKeyPair("Ed25519");
 		await kv.set(["key"], {
 			privateKey: await exportJwk(privateKey),
 			publicKey: await exportJwk(publicKey)
