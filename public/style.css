@@ -28,24 +28,24 @@ body {
 }
 
 h1 {
-	font-size: 7.5vw;
+	font-size: 8rem;
 	line-height: 100%;
 	filter: brightness(150%);
 }
 
 h2 {
-	font-size: max(3vw, 3vh);
+	font-size: 4rem;
 	filter: brightness(125%);
 }
 
 h3 {
 	margin: 0;
-	font-size: max(2.25vw, 2.5vh);
+	font-size: 3rem;
 	filter: brightness(110%);
 }
 
 p {
-	font-size: max(1.5vw, 2vh);
+	font-size: 2rem;
 }
 
 iframe {
@@ -72,11 +72,11 @@ input:not([type=checkbox]) {
 	color: var(--ifg);
 	border-style: solid;
 	border-radius: 1vh;
-	font-size: 2vw;
+	font-size: 2rem;
 }
 
 li {
-	font-size: max(1vw, 2vh);
+	font-size: 2rem;
 }
 
 div.center {
@@ -100,7 +100,7 @@ div.center {
 	color: var(--bfg);
 	text-align: center;
 	border-radius: 1vh;
-	font-size: max(2vw, 4vh);
+	font-size: 3rem;
 	padding: 2vh 3vh;
 }
 
@@ -125,11 +125,11 @@ div.center {
 .button.donation {
 	margin-left: auto;
 	padding: 0;
-	height: calc(max(2vw, 4vh) + 6vh);
+	height: calc(1rem + 6vh);
 }
 
 .button.donation img {
-	height: calc(max(2vw, 4vh) + 6vh);
+	height: calc(1rem + 6vh);
 }
 
 .topbar, .sidebar {
@@ -148,13 +148,13 @@ div.center {
 }
 
 .topbar-filler {
-	padding-top: calc(max(2vw, 4vh) + 4vh - 6vmin);
+	padding-top: calc(1rem + 4vh - 6vmin);
 }
 
 .sidebar-button {
 	position: fixed;
 	color: var(--fg);
-	font-size: 5vh;
+	font-size: 4rem;
 	top: 2vh;
 	left: 4vh;
 }
@@ -174,7 +174,7 @@ div.center {
 .sidebar-close {
 	position: absolute;
 	color: var(--fg);
-	font-size: 5vh;
+	font-size: 4rem;
 	top: 2vh;
 	right: 4vh;
 }
@@ -212,10 +212,14 @@ div.center {
 	margin-right: 1vmax;
 }
 
-code {
+code:not(.code-highlight) {
 	color: var(--ifg);
 	background-color: var(--ibg);
 	padding: 0 0.5ch;
+}
+
+pre[class*="language-"] code[class*="language-"] {
+	font-size: 1.5rem;
 }
 
 .hidden {
@@ -225,7 +229,7 @@ code {
 table.more {
 	width: 100%;
 	margin: auto;
-	font-size: max(2.25vw, 2.5vh);
+	font-size: 2rem;
 	filter: brightness(110%);
 }
 
@@ -250,7 +254,7 @@ table.more td {
 .stamp {
 	margin-left: 1vmax;
 	padding: 1vh 1.5vh;
-	font-size: 2vmax;
+	font-size: 2rem;
 }
 
 /* suit web-stamp to our needs */
@@ -268,12 +272,12 @@ div .ws-container {
 }
 
 #comments .name {
-	font-size: 2.5vmax;
+	font-size: 2rem;
 	filter: brightness(125%);
 }
 
 #comments .name a {
-	font-size: 1.5vmax;
+	font-size: 1rem;
 }
 
 #comments .comment {
@@ -314,4 +318,8 @@ span.dimmed {
   max-height: 80vh;
   display: block;
   min-width: 0;
+}
+
+.katex {
+	font-size: 2rem;
 }

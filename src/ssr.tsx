@@ -20,6 +20,7 @@ import NotFoundPage from "./client/pages/not-found";
 import { baseUrl } from "./constants";
 import indexHtml from "./assets/index.html";
 import rehypeImgGrid from "./plugins/rehype-img-grid";
+import rehypePrism from "rehype-prism-plus";
 
 const cache = new Map<string, { hash: string, html: string }>();
 
@@ -72,6 +73,7 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		.use(remarkRehype, { allowDangerousHtml: true })
 		.use(rehypeKatex)
 		.use(rehypeImgGrid)
+		.use(rehypePrism)
 		.use(rehypeSurroundedText, [
 			{ surrounders: [['"', '"']] },
 			{ surrounders: [['(', ')']], className: "dimmed" }
@@ -80,6 +82,7 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		.processSync(content);
 	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);
 	const replaced = indexHtml
+		.replace("<!--head-extra-->", `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prism-themes@1.9.0/themes/prism-vsc-dark-plus.min.css" />`)
 		.replace("{scriptName}", "post")
 		.replace("{serverData}", JSON.stringify({ title, date, summary, html: encodeURIComponent(String(rendered)), insideFrame }))
 		.replace("<!--app-html-->", html);

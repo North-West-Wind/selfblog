@@ -231,7 +231,7 @@ export default function Editor() {
 			</Panel>
 			<Separator />
 			<Panel defaultSize="75%" minSize="50%" style={{ overflowY: "hidden" }}>
-				<MDEditor value={text} onChange={setText} height={null} disabled={!loaded} visibleDragbar={false} previewOptions={{
+				<MDEditor value={text} onChange={setText} height={null} disabled={!loaded} highlightEnable visibleDragbar={false} previewOptions={{
 					remarkPlugins: [
 						remarkFediverseUser,
 						[remarkFlexibleMarkers, { markerTagName: "span", markerClassName: "highlight" }],

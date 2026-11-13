@@ -8,7 +8,7 @@ h2 {
 }
 
 p, li {
-	font-size: 1vmax;
+	font-size: 1.25rem;
 }
 
 input:not([type=checkbox]) {
@@ -16,7 +16,7 @@ input:not([type=checkbox]) {
 	margin: .5vh;
 	border-style: solid;
 	border-radius: 1vh;
-	font-size: 1vmax;
+	font-size: 1rem;
 }
 
 input.hidden {
@@ -31,13 +31,13 @@ input.hidden {
 .button {
 	padding: 1vh;
 	margin-bottom: 1vh;
-	font-size: 1vmax;
+	font-size: 1.25rem;
 }
 
 .file-button {
 	background-color: var(--bfg);
 	color: var(--bbg);
-	font-size: max(0.75vw, 1.5vh);
+	font-size: 1rem;
 	margin: .5vh;
 	padding-left: .5vh;
 	letter-spacing: .5vh;
@@ -50,4 +50,8 @@ input.hidden {
 
 .w-md-editor {
 	--md-editor-font-family: 'Courier New', Courier, monospace !important;
+}
+
+.katex {
+	font-size: 1rem;
 }
