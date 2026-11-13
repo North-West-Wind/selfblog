@@ -79,7 +79,7 @@ export function generateFeed(baseUrl: string, limit: number) {
 		const [meta, content] = markdown.split(/^-{3,}$/m, 2);
 		const title = meta.match(/^#\s+(.+)$/m)?.[1];
 		if (!title) continue;
-		const summary = meta.split(/^#+\s+Summary\s*$/m, 2)[1].replace(/  $/m, "\n");
+		const summary = meta.split(/^#+\s+Summary\s*$/m, 2)[1]?.replace(/  $/m, "\n");
 		const img = content.match(/!\[.*\]\((.*)\)/)?.[1];
 		const datePath = moment(date).format("YYYY/MM/DD");
 		feed.addItem({
