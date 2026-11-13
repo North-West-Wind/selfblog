@@ -2,9 +2,9 @@ import Comments from "../components/Comments";
 import { hydrate } from "preact";
 import NavBar from "../components/NavBar";
 
-export default function PostPage(props: { title?: string, date?: string, summary?: string, html?: string, insideFrame?: boolean }) {
+export default function PostPage(props: { title?: string, date?: string, summary?: string, html?: string }) {
 	return <>
-		<NavBar hidden={props.insideFrame} />
+		<NavBar />
 		<h2><time class="dt-publish" datetime={props.date}>{props.date}</time></h2>
 		<h1 class="p-name">{props.title}</h1>
 		{props.summary && <p class="p-summary">{props.summary}</p>}

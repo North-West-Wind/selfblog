@@ -2,7 +2,7 @@ import React from "react";
 
 type Attributes = { sidebar?: boolean };
 
-const NavBarItemsComponent: React.FC<Attributes> = (props: Attributes) => {
+const NavBarItems: React.FC<Attributes> = (props: Attributes) => {
 	return <>
 		<div className="button" style={{ marginTop: props.sidebar ? "9vh" : 0 }}>
 			<a href="/">Home</a>
@@ -31,4 +31,4 @@ const NavBarItemsComponent: React.FC<Attributes> = (props: Attributes) => {
 	</>
 }
 
-export default NavBarItemsComponent;
+export default NavBarItems;

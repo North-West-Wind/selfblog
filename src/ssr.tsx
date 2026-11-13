@@ -80,7 +80,7 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		])
 		.use(rehypeStringify, { allowDangerousHtml: true })
 		.processSync(content);
-	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);
+	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} />);
 	const replaced = indexHtml
 		.replace("<!--head-extra-->", `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prism-themes@1.9.0/themes/prism-vsc-dark-plus.min.css" />`)
 		.replace("{scriptName}", "post")

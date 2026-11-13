@@ -1,10 +1,10 @@
-import NavBarItemsComponent from "./NavBarItems";
+import NavBarItems from "./NavBarItems";
 
-export default function TopBar(props: { hidden?: boolean }) {
+export default function TopBar(props: { hidden: boolean }) {
 	return <>
 		<div className={"topbar flex" + (props.hidden ? " hidden" : "")}>
-			<NavBarItemsComponent />
+			<NavBarItems />
 		</div>
-		<div className="topbar-filler"></div>
+		<div className={"topbar-filler" + (props.hidden ? " hidden" : "")}></div>
 	</>;
 }

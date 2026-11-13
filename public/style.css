@@ -137,10 +137,22 @@ div.center {
 .topbar {
 	background-color: var(--fg);
 	color: var(--bg);
+	transition: transform .5s ease;
+}
+
+.topbar.hidden {
+	transform: translateY(-100%);
+	display: flex;
 }
 
 .topbar-filler {
 	padding-top: calc(3rem + 4vh - 6vmin);
+	transition: padding-top .5s ease;
+}
+
+.topbar-filler.hidden {
+	padding-top: 0;
+	display: inherit;
 }
 
 .sidebar-button {
@@ -149,6 +161,12 @@ div.center {
 	font-size: 4rem;
 	top: 2vh;
 	left: 4vh;
+	transition: transform .5s ease;
+}
+
+.sidebar-button.hidden {
+	transform: scale(0);
+	display: inherit;
 }
 
 .sidebar {
