@@ -20,7 +20,7 @@ export const followersTable = sqliteTable("followers", {
 	host: text().notNull(),
 	inbox: text(),
 	outbox: text(),
-	followedAt: int({ mode: "timestamp" }).notNull()
+	followedAt: int({ mode: "timestamp" })
 });
 
 export const commentsTable = sqliteTable("comments", {

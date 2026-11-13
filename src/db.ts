@@ -95,7 +95,7 @@ export async function hostHasFollower(host: string) {
 }
 
 export async function getFollowers() {
-	return await db.select().from(followersTable);
+	return await db.select().from(followersTable).where(isNotNull(followersTable.followedAt));
 }
 
 export async function addFollower(follower: DatabaseFollower) {
@@ -105,7 +105,7 @@ export async function addFollower(follower: DatabaseFollower) {
 }
 
 export async function deleteFollower(id: string) {
-	await db.delete(followersTable).where(eq(followersTable.id, id));
+	await db.update(followersTable).set({ followedAt: null }).where(eq(followersTable.id, id));
 }
 
 export async function addComment(comment: DatabaseComment) {
