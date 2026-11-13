@@ -10,7 +10,7 @@ import * as path from "path";
 import { Temporal } from "@js-temporal/polyfill";
 import { configure, getConsoleSink } from "@logtape/logtape";
 import { apUsername, dataDir, siteDescription, siteName } from "./constants";
-import { addFollower, getPostById, getPosts, getProfile, hostHasFollower, setProfile, deleteFollower, updatePostLastSyncByIds, addComment, getCommentAuthorUrl, updateComment, deleteComment, syncDatabase, getCommentWithPostById } from "./db";
+import { addFollower, getPostById, getPosts, getProfile, hostHasFollower, setProfile, deleteFollower, updatePostLastSyncByIds, addComment, getCommentAuthorUrl, updateComment, deleteComment, syncDatabase, getCommentWithPostById, getFollowers } from "./db";
 import { DatabasePost } from "./db/schema";
 
 configure({
@@ -174,9 +174,11 @@ federation.setOutboxDispatcher("/users/{identifier}/outbox", async (ctx, _id) =>
 
 federation.setFollowersDispatcher("/users/{identifier}/followers", async (_ctx, id) => {
 	if (id !== apUsername) return null;
-	const items: { id: URL, inboxId: URL }[] = [];
-	for await (const { key, value } of kv.list(["followers"]))
-		items.push({ id: new URL(key[2]!), inboxId: new URL(value as string) });
+	const items: Recipient[] = [];
+	(await getFollowers()).forEach(follower => {
+		if (!follower.id || !follower.inbox) return;
+		items.push({ id: new URL(follower.id), inboxId: new URL(follower.inbox) });
+	});
 	return { items };
 });
 
@@ -294,8 +296,6 @@ app.use(integrateFederation(federation, async (req) => {
 	const proto = req.header("x-forwarded-proto");
 	const host = req.header("x-forwarded-host");
 	if (!host || !proto) return;
-	const url = new URL(req.url, `${proto}://${host}`);
-	req = new Request(url.toString(), req as unknown as Request) as unknown as typeof req;
 	if (!synced) {
 		synced = true;
 		// Sync database, then sync posts

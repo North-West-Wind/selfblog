@@ -22,7 +22,7 @@ export async function syncDatabase() {
 
 	let inserted = 0;
 	const currentPosts: string[] = [];
-	await Promise.all(Array.from(postIterator()).map(async ({ dir, date, post: name }) => {
+	await Promise.all(Array.from(postIterator({ ascending: true })).map(async ({ dir, date, post: name }) => {
 		const mtime = new Date(fs.readdirSync(dir).map(entry => fs.statSync(path.join(dir, entry)).mtimeMs).reduce((a, b) => Math.max(a, b)));
 		const relDir = path.relative(dataDir, dir);
 		const hashId = crypto.createHash("SHA1")
@@ -92,6 +92,10 @@ export async function getVisits(relDirs: string[]) {
 export async function hostHasFollower(host: string) {
 	const count = await db.$count(followersTable, eq(followersTable.host, host));
 	return count > 0;
+}
+
+export async function getFollowers() {
+	return await db.select().from(followersTable);
 }
 
 export async function addFollower(follower: DatabaseFollower) {
