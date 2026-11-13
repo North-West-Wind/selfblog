@@ -21,7 +21,7 @@ const feedCopyright = process.env.FEED_COPYRIGHT || "All rights reserved";
 const feedAuthor = process.env.FEED_AUTHOR;
 const feedAuthorLink = process.env.FEED_AUTHOR_LINK;
 
-const apUsername = process.env.AP_USERNAME!;
+const apUsername = process.env.AP_USERNAME || "";
 
 export {
 	dataDir,

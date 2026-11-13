@@ -29,6 +29,7 @@ export const commentsTable = sqliteTable("comments", {
 	replyTargetId: text().notNull(),
 	authorUrl: text().notNull(),
 	authorName: text().notNull(),
+	authorIconUrl: text(),
 	content: text().notNull(),
 	publishedAt: int({ mode: "timestamp" }).notNull()
 });

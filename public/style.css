@@ -25,6 +25,7 @@ body {
 	padding: 6vmin;
 	background-color: var(--bg);
 	color: var(--fg);
+	font-size: 2rem;
 }
 
 h1 {
@@ -42,10 +43,6 @@ h3 {
 	margin: 0;
 	font-size: 3rem;
 	filter: brightness(110%);
-}
-
-p {
-	font-size: 2rem;
 }
 
 iframe {
@@ -72,11 +69,6 @@ input:not([type=checkbox]) {
 	color: var(--ifg);
 	border-style: solid;
 	border-radius: 1vh;
-	font-size: 2rem;
-}
-
-li {
-	font-size: 2rem;
 }
 
 div.center {
@@ -125,11 +117,11 @@ div.center {
 .button.donation {
 	margin-left: auto;
 	padding: 0;
-	height: calc(1rem + 6vh);
+	height: calc(3rem + 6vh);
 }
 
 .button.donation img {
-	height: calc(1rem + 6vh);
+	height: calc(3rem + 6vh);
 }
 
 .topbar, .sidebar {
@@ -148,7 +140,7 @@ div.center {
 }
 
 .topbar-filler {
-	padding-top: calc(1rem + 4vh - 6vmin);
+	padding-top: calc(3rem + 4vh - 6vmin);
 }
 
 .sidebar-button {
@@ -263,24 +255,7 @@ div .ws-container {
 	backdrop-filter: blur(1vmax);
 }
 
-#comments {
-	filter: hue-rotate(120deg);
-}
-
-#comments h1 {
-	margin-bottom: 0;
-}
-
-#comments .name {
-	font-size: 2rem;
-	filter: brightness(125%);
-}
-
-#comments .name a {
-	font-size: 1rem;
-}
-
-#comments .comment {
+.comment {
 	padding: 2vmax;
 	border-color: #fff7;
 	border-radius: 2vmax;
@@ -289,7 +264,31 @@ div .ws-container {
 	margin-top: 1vmax;
 }
 
-#comments p {
+.comment-icon {
+	height: 6rem;
+	border-radius: 50%;
+	margin-right: 2rem;
+}
+
+.comment-body {
+	filter: hue-rotate(120deg);
+	flex: 1;
+}
+
+.comment-body h1 {
+	margin-bottom: 0;
+}
+
+.comment-body .name {
+	font-size: 2rem;
+	filter: brightness(125%);
+}
+
+.comment-body .name a {
+	font-size: 1rem;
+}
+
+.comment-body p {
 	margin: 0;
 }
 

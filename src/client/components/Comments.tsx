@@ -1,14 +1,18 @@
+import DOMPurify from "dompurify";
 import { useEffect, useState } from "react";
 import type { DatabaseComment } from "../../db/schema";
 
 type NestedComment = DatabaseComment & { children?: NestedComment[] };
 
 const Comment = (props: { comment: NestedComment }) => {
-	return <div class="comment">
-		<div class="name">{props.comment.authorName} <a href={props.comment.authorUrl} target={props.comment.authorName}>Link</a></div>
-		<div class="content" dangerouslySetInnerHTML={{ __html: props.comment.content }}></div>
-		{props.comment.children?.map(comment => <Comment comment={comment} />)}
-	</div>;
+	return <div class="flex comment">
+		<img class="comment-icon" src={props.comment.authorIconUrl || "/assets/placeholder-icon.svg"} />
+		<div class="comment-body">
+			<div class="name">{props.comment.authorName} <a href={props.comment.authorUrl} target={props.comment.authorName}>Link</a></div>
+			<div class="content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(props.comment.content) }}></div>
+			{props.comment.children?.map(comment => <Comment comment={comment} />)}
+		</div>
+	</div> ;
 };
 
 const Comments = () => {

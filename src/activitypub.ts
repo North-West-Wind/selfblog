@@ -130,6 +130,7 @@ federation
 			replyTargetId: replyTargetId.href,
 			authorUrl: author.id.href,
 			authorName,
+			authorIconUrl: author.iconId?.href || null,
 			content: object.content?.toString() ?? "",
 			publishedAt: new Date((object.published as Temporal.Instant || Temporal.Now.instant()).epochMilliseconds)
 		});
@@ -192,7 +193,7 @@ function postToArticle(ctx: Context<unknown>, post: Omit<DatabasePost, "visits">
 	const markdown = fs.readFileSync(path.join(dataDir, post.path, "index.md"), { encoding: "utf8" });
 	const [meta, content] = markdown.split(/^-{3,}$/m, 2);
 	const title = meta.match(/^#\s+(.+)$/m)?.[1];
-	let summary = (meta.split(/^#+\s+Summary\s*$/m, 2)?.[1] || content.split("\n\n", 2)[0]).replace(/  $/m, "\n");
+	let summary = (meta.split(/^#+\s+Summary\s*$/m, 2)?.[1] || content.split("\n\n", 2)[0]).replace(/  $/m, "\n").trim();
 	if (!summary.endsWith(".")) summary += "...";
 	else if (summary.endsWith(".") && !summary.endsWith("...")) summary += "..";
 	const actorUri = ctx.getActorUri(apUsername);

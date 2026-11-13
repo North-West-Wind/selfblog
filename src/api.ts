@@ -10,7 +10,7 @@ import moment from "moment";
 import z from "zod";
 import templateMd from "./assets/template.md";
 
-const ap = import("./activitypub");
+const ap = apUsername ? import("./activitypub") : undefined;
 
 const saltHolder = {
 	salt: genSaltSync(),
@@ -147,9 +147,11 @@ app.post("/api/edit/:year/:month/:day/:post/publish", async (req, res) => {
 	// Sync database, then sync activitypub
 	try {
 		await syncDatabase();
-		const url = new URL(req.url, `${req.protocol}://${req.host}`);
-		const request = new Request(url.toString(), req as unknown as Request);
-		await (await ap).sync(request);
+		if (ap) {
+			const url = new URL(req.url, `${req.protocol}://${req.host}`);
+			const request = new Request(url.toString(), req as unknown as Request);
+			await (await ap).sync(request);
+		}
 	} catch (err) {
 		console.error("Failed to sync posts:", err);
 	}
