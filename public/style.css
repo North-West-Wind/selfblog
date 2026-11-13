@@ -290,30 +290,28 @@ div .ws-container {
 }
 
 span.quoted {
-	filter: hue-rotate(90deg);
+	color: #75f;
 }
 
 span.highlight {
-	filter: hue-rotate(180deg);
+	color: #c45;
 }
 
 span.dimmed {
 	filter: grayscale() brightness(80%);
 }
 
-article img {
-	max-width: 80vw;
-}
-
 .img-grid {
 	display: grid;
-	grid-template-columns: auto auto;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 	gap: 0.5rem;
+	justify-items: center;
+  	align-items: center;
 }
 
 .img-grid img {
-  width: 100%;
-  height: auto;
+  max-width: 100%;
+  max-height: 80vh;
   display: block;
   min-width: 0;
 }
