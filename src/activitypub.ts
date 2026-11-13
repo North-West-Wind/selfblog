@@ -28,6 +28,7 @@ const federation = createFederation<void>({ kv, queue: new InProcessMessageQueue
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 	if (id !== apUsername) return null;
+	const keyPairs = await ctx.getActorKeyPairs(id);
 	return new Person({
 		id: ctx.getActorUri(id),
 		name: siteName,
@@ -48,18 +49,23 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 	});
 }).setKeyPairsDispatcher(async (_ctx, id) => {
 	if (id != apUsername) return [];
-	const entry = await kv.get<{ privateKey: JsonWebKey, publicKey: JsonWebKey }>(["key"]);
-	if (!entry?.privateKey || !entry.publicKey) {
-		const { privateKey, publicKey } = await generateCryptoKeyPair("Ed25519");
-		await kv.set(["key"], {
-			privateKey: await exportJwk(privateKey),
-			publicKey: await exportJwk(publicKey)
-		});
-		return [{ privateKey, publicKey }];
-	}
-	const privateKey = await importJwk(entry.privateKey, "private");
-	const publicKey = await importJwk(entry.publicKey, "public");
-	return [{ privateKey, publicKey }];
+	const entry = await kv.get<{ [key in "rsa" | "ed25519"]: { privateKey: JsonWebKey, publicKey: JsonWebKey }}>(["key"]);
+	if (entry?.rsa && entry.ed25519) return [{
+		privateKey: await importJwk(entry.rsa.privateKey, "private"),
+		publicKey: await importJwk(entry.rsa.publicKey, "public")
+	}, {
+		privateKey: await importJwk(entry.ed25519.privateKey, "private"),
+		publicKey: await importJwk(entry.ed25519.publicKey, "public")
+	}];
+	const [rsa, ed25519] = await Promise.all([generateCryptoKeyPair("RSASSA-PKCS1-v1_5"), generateCryptoKeyPair("Ed25519")]);
+	kv.set(["key"], { rsa: {
+		privateKey: await exportJwk(rsa.privateKey),
+		publicKey: await exportJwk(rsa.publicKey)
+	}, ed25519: {
+		privateKey: await exportJwk(ed25519.privateKey),
+		publicKey: await exportJwk(ed25519.publicKey)
+	}});
+	return [rsa, ed25519];
 });
 
 federation
