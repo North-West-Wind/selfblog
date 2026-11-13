@@ -45,7 +45,8 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 		}),
 		outbox: ctx.getOutboxUri(id),
 		followers: ctx.getFollowersUri(id),
-		publicKeys: (await ctx.getActorKeyPairs(id)).map(keyPair => keyPair.cryptographicKey),
+		publicKey: keyPairs[0].cryptographicKey,
+		publicKeys: keyPairs.map(keyPair => keyPair.cryptographicKey),
 		assertionMethods: keyPairs.map(key => key.multikey)
 	});
 }).setKeyPairsDispatcher(async (_ctx, id) => {
