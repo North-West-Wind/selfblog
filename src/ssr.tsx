@@ -9,7 +9,6 @@ import rehypeKatex from "rehype-katex";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
-import rehypeWrapSibling from "rehype-wrap-sibling";
 import rehypeStringify from "rehype-stringify";
 import rehypeSurroundedText from "./plugins/rehype-surrounded-text";
 import { Post } from "./util";
@@ -20,6 +19,7 @@ import DeletePage from "./client/pages/delete";
 import NotFoundPage from "./client/pages/not-found";
 import { baseUrl } from "./constants";
 import indexHtml from "./assets/index.html";
+import rehypeImgGrid from "./plugins/rehype-img-grid";
 
 const cache = new Map<string, { hash: string, html: string }>();
 
@@ -71,9 +71,11 @@ export function renderPostPage(path: string, insideFrame: boolean, markdown?: st
 		.use(remarkImgLinks, { absolutePath: `${baseUrl}${path}/` })
 		.use(remarkRehype, { allowDangerousHtml: true })
 		.use(rehypeKatex)
-		.use(rehypeWrapSibling, { wrapper: "div.img-grid", selector: "img" })
-		.use(rehypeSurroundedText, { surrounders: [['"', '"']] })
-		.use(rehypeSurroundedText, { surrounders: [['(', ')']], className: "dimmed" })
+		.use(rehypeImgGrid)
+		.use(rehypeSurroundedText, [
+			{ surrounders: [['"', '"']] },
+			{ surrounders: [['(', ')']], className: "dimmed" }
+		])
 		.use(rehypeStringify, { allowDangerousHtml: true })
 		.processSync(content);
 	const html = renderToString(<PostPage title={title} date={date} summary={summary} html={String(rendered)} insideFrame={insideFrame} />);

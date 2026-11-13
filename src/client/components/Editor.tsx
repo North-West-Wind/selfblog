@@ -240,8 +240,10 @@ export default function Editor() {
 					],
 					rehypePlugins: [
 						rehypeKatex,
-						[rehypeSurroundedText, { surrounders: [['"', '"']] }],
-						[rehypeSurroundedText, { surrounders: [['(', ')']], className: "dimmed" }]
+						[rehypeSurroundedText, [
+							{ surrounders: [['"', '"']] },
+							{ surrounders: [['(', ')']], className: "dimmed" }
+						]]
 					]
 				}} />
 			</Panel>

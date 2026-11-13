@@ -2,48 +2,43 @@ import { SKIP, visit } from "unist-util-visit";
 import type { Plugin } from "unified";
 import type { Root, Element, ElementContent, Text } from "hast";
 
-const REGEXES = [
-  ['"', '"'],
-  ["\u201C", "\u201D"], // “ ”
-  ["\u2018", "\u2019"], // ‘ ’
-].map(([open, close]) => {
-  const o = open.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const c = close.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`${o}([^\\n]*?)${c}`, "g");
-});
+type SurroundedTextConfig = {
+  surrounders: [string, string][];
+  className?: string;
+};
 
-type RehypeSurroundedTextOptions = {
-	className?: string,
-	tagName?: string,
-	surrounders: [string, string][]
-}
+type RehypeSurroundedTextOptions = SurroundedTextConfig[];
 
 type Segment =
   | { type: "text"; value: string }
-  | { type: "quoted"; value: string };
+  | { type: "quoted"; value: string; className: string };
+
+type Matcher = { className: string; regexes: RegExp[] };
 
 const rehypeSurroundedText: Plugin<[RehypeSurroundedTextOptions], Root> = (options) => {
-	const {
-	  className = "quoted",
-	  tagName = "span"
-	} = options;
   const skipTags = ["code", "pre", "script", "style"];
-	const regexes = options.surrounders.map(([open, close]) => {
-	  const o = open.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	  const c = close.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	  return new RegExp(`${o}([^\\n]*?)${c}`, "g");
-	});
+  const markerAttr = "data-surrounded-text";
+  const markerValue = "1";
+
+  const matchers = options.map((cfg) => {
+    const {
+      className = "quoted",
+      surrounders,
+    } = cfg;
+    const regexes = surrounders.map(([open, close]) => {
+      const o = open.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const c = close.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`${o}([^\\n]*?)${c}`, "g");
+    });
+    return { className, regexes };
+  });
 
   return (tree: Root) => {
     visit(tree, "element", (node: Element) => {
       if (skipTags.includes(node.tagName)) return;
-      if (node.tagName === tagName) {
-        const nodeClassName = node.properties?.className;
-        if (nodeClassName) {
-          if (typeof nodeClassName == "string" && nodeClassName == className) return SKIP;
-          if (Array.isArray(nodeClassName) && nodeClassName.includes(className)) return SKIP;
-        }
-      }
+
+      const marker = node.properties?.[markerAttr];
+      if (marker === markerValue) return SKIP;
 
       const newChildren: ElementContent[] = [];
       let changed = false;
@@ -54,7 +49,7 @@ const rehypeSurroundedText: Plugin<[RehypeSurroundedTextOptions], Root> = (optio
           continue;
         }
 
-        const segments = splitQuoted(child.value, regexes);
+        const segments = splitQuoted(child.value, matchers);
         if (segments.length === 1 && segments[0].type === "text") {
           newChildren.push(child);
           continue;
@@ -68,8 +63,11 @@ const rehypeSurroundedText: Plugin<[RehypeSurroundedTextOptions], Root> = (optio
           } else {
             const wrapper: Element = {
               type: "element",
-              tagName,
-              properties: { className: [className] },
+              tagName: "span",
+              properties: {
+                className: [seg.className],
+                [markerAttr]: markerValue,
+              },
               children: [{ type: "text", value: seg.value }],
             };
             newChildren.push(wrapper);
@@ -85,23 +83,25 @@ const rehypeSurroundedText: Plugin<[RehypeSurroundedTextOptions], Root> = (optio
   };
 };
 
-function splitQuoted(text: string, regexes: RegExp[]): Segment[] {
+function splitQuoted(text: string, matchers: Matcher[]): Segment[] {
   const out: Segment[] = [];
   let rest = text;
 
   while (rest.length > 0) {
-    let best: { start: number; end: number; inner: string; full: string } | null = null;
+    let best: { start: number; end: number; full: string; className: string } | null = null;
 
-    for (const re of regexes) {
-      re.lastIndex = 0;
-      const m = re.exec(rest);
-      if (m && (best === null || m.index < best.start)) {
-        best = {
-          start: m.index,
-          end: m.index + m[0].length,
-          inner: m[1],
-          full: m[0],
-        };
+    for (const { regexes, className } of matchers) {
+      for (const re of regexes) {
+        re.lastIndex = 0;
+        const m = re.exec(rest);
+        if (m && (best === null || m.index < best.start)) {
+          best = {
+            start: m.index,
+            end: m.index + m[0].length,
+            full: m[0],
+            className,
+          };
+        }
       }
     }
 
@@ -113,10 +113,7 @@ function splitQuoted(text: string, regexes: RegExp[]): Segment[] {
     if (best.start > 0) {
       out.push({ type: "text", value: rest.slice(0, best.start) });
     }
-    out.push({
-      type: "quoted",
-      value: best.full,
-    });
+    out.push({ type: "quoted", value: best.full, className: best.className });
     rest = rest.slice(best.end);
   }
 
