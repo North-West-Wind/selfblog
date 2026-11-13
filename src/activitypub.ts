@@ -1,6 +1,6 @@
 import { app } from ".";
 import { integrateFederation } from "@fedify/express";
-import { Context, createFederation, exportJwk, generateCryptoKeyPair, importJwk, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
+import { Context, createFederation, exportJwk, Federation, generateCryptoKeyPair, importJwk, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
 import { Accept, Article, Create, Delete, Endpoints, Follow, Image, Note, Person, PUBLIC_COLLECTION, Recipient, Undo, Update } from "@fedify/vocab";
 import { DatabaseSync } from "node:sqlite";
@@ -9,9 +9,10 @@ import * as fs from "fs";
 import * as path from "path";
 import { Temporal } from "@js-temporal/polyfill";
 import { configure, getConsoleSink } from "@logtape/logtape";
-import { apUsername, dataDir, siteDescription, siteName } from "./constants";
+import { apUsername, dataDir, debugFlag, password, siteDescription, siteName } from "./constants";
 import { addFollower, getPostById, getPosts, getProfile, hostHasFollower, setProfile, deleteFollower, updatePostLastSyncByIds, addComment, getCommentAuthorUrl, updateComment, deleteComment, syncDatabase, getCommentWithPostById, getFollowers } from "./db";
 import { DatabasePost } from "./db/schema";
+import { createFederationDebugger } from "@fedify/debugger";
 
 configure({
   sinks: { console: getConsoleSink() },
@@ -24,7 +25,14 @@ configure({
 
 const db = new DatabaseSync("data/fedify.db");
 const kv = new SqliteKvStore(db);
-const federation = createFederation<void>({ kv, queue: new InProcessMessageQueue() });
+const innerFederation = createFederation<void>({ kv, queue: new InProcessMessageQueue() });
+const federation = debugFlag ? createFederationDebugger(innerFederation, {
+	path: "/_debug",
+	auth: {
+		type: "password",
+		password: password
+	}
+}) as Federation<void> : innerFederation;
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 	if (id !== apUsername) return null;
