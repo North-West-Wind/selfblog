@@ -99,7 +99,9 @@ export async function getFollowers() {
 }
 
 export async function addFollower(follower: DatabaseFollower) {
-	await db.insert(followersTable).values(follower);
+	const rows = await db.select({ id: followersTable.id }).from(followersTable).where(eq(followersTable.id, follower.id)).limit(1);
+	if (rows.length) await db.update(followersTable).set(follower).where(eq(followersTable.id, follower.id));
+	else await db.insert(followersTable).values(follower);
 }
 
 export async function deleteFollower(id: string) {
