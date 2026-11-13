@@ -2,7 +2,7 @@ import { app } from ".";
 import { integrateFederation } from "@fedify/express";
 import { Context, createFederation, exportJwk, generateCryptoKeyPair, importJwk, InProcessMessageQueue, RequestContext } from "@fedify/fedify";
 import { SqliteKvStore } from "@fedify/sqlite";
-import { Accept, Article, Create, Delete, Follow, Image, Note, Person, PUBLIC_COLLECTION, Recipient, Undo, Update } from "@fedify/vocab";
+import { Accept, Article, Create, Delete, Endpoints, Follow, Image, Note, Person, PUBLIC_COLLECTION, Recipient, Undo, Update } from "@fedify/vocab";
 import { DatabaseSync } from "node:sqlite";
 import * as crypto from "crypto";
 import * as fs from "fs";
@@ -40,6 +40,9 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 		preferredUsername: id,
 		url: new URL("/", ctx.url),
 		inbox: ctx.getInboxUri(id),
+		endpoints: new Endpoints({
+			sharedInbox: ctx.getInboxUri()
+		}),
 		outbox: ctx.getOutboxUri(id),
 		followers: ctx.getFollowersUri(id),
 		publicKey: keyPairs[0].cryptographicKey,
@@ -67,7 +70,7 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 });
 
 federation
-	.setInboxListeners("/users/{identifier}/inbox")
+	.setInboxListeners("/users/{identifier}/inbox", "/inbox")
 	.on(Follow, async (ctx, follow) => {
 		if (follow.id == null || follow.actorId == null || follow.objectId == null) return;
 		const parsed = ctx.parseUri(follow.objectId);
@@ -151,7 +154,7 @@ federation
 		await deleteComment(objectId.href);
 	});
 
-federation.setOutboxDispatcher("/users/{identifier}/outbox", async (ctx, id) => {
+federation.setOutboxDispatcher("/users/{identifier}/outbox", async (ctx, _id) => {
 	const actorUri = ctx.getActorUri(apUsername);
 	const items = Array.from(await getPosts()).map(post => {
 		const article = postToArticle(ctx, post);
@@ -206,7 +209,7 @@ function postToArticle(ctx: Context<unknown>, post: Omit<DatabasePost, "visits">
 export async function sync(ctx: Request | RequestContext<unknown>) {
 	if (ctx instanceof Request) ctx = federation.createContext(ctx);
 	console.log("Federating posts...");
-  const actorUri = ctx.getActorUri(apUsername);
+  	const actorUri = ctx.getActorUri(apUsername);
 	const syncedPosts = new Set<string>();
 	const currentPosts = new Set<string>();
 	for (const post of await getPosts()) {
@@ -286,7 +289,7 @@ async function backfill(ctx: Context<unknown>, recipients: Recipient[]) {
 
 let synced = false;
 app.set("trust proxy", true);
-app.use(integrateFederation(federation, (req) => {
+app.use(integrateFederation(federation, async (req) => {
 	// Sync on first request
 	const proto = req.header("x-forwarded-proto");
 	const host = req.header("x-forwarded-host");
@@ -296,10 +299,15 @@ app.use(integrateFederation(federation, (req) => {
 	if (!synced) {
 		synced = true;
 		// Sync database, then sync posts
-		syncDatabase().then(() => sync(req as unknown as Request)).catch(err => {
+		try {
+			await syncDatabase();
+			const url = new URL(req.url, `${proto}://${host}`);
+			const request = new Request(url.toString(), req as unknown as Request);
+			await sync(request);
+		} catch (err) {
 			console.error("Failed to sync posts:", err);
 			synced = false;
-		});
+		}
 	}
 }));
 

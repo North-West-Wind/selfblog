@@ -135,7 +135,7 @@ app.patch("/api/edit/:year/:month/:day/:post/rename", express.text(), (req, res)
 });
 
 // Publish the post
-app.post("/api/edit/:year/:month/:day/:post/publish", (req, res) => {
+app.post("/api/edit/:year/:month/:day/:post/publish", async (req, res) => {
 	const dir = path.join(dataDir, req.params.year, req.params.month, req.params.day, req.params.post);
 	const hiddenFile = path.join(dir, ".hidden");
 	if (!fs.existsSync(hiddenFile)) {
@@ -145,7 +145,14 @@ app.post("/api/edit/:year/:month/:day/:post/publish", (req, res) => {
 	fs.rmSync(hiddenFile);
 	res.sendStatus(200);
 	// Sync database, then sync activitypub
-	syncDatabase().then(() => ap).then(({ sync }) => sync(req as unknown as Request)).catch(err => console.error("Failed to sync posts:", err));
+	try {
+		await syncDatabase();
+		const url = new URL(req.url, `${req.protocol}://${req.host}`);
+		const request = new Request(url.toString(), req as unknown as Request);
+		await (await ap).sync(request);
+	} catch (err) {
+		console.error("Failed to sync posts:", err);
+	}
 });
 
 // Delete the post
