@@ -41,7 +41,6 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 		endpoints: new Endpoints({
 			sharedInbox: ctx.getInboxUri()
 		}),
-		outbox: ctx.getOutboxUri(id),
 		followers: ctx.getFollowersUri(id),
 		publicKeys: keyPairs.map(keyPair => keyPair.cryptographicKey),
 		assertionMethods: keyPairs.map(key => key.multikey)
@@ -161,24 +160,6 @@ federation
 		await deleteComment(objectId.href);
 	});
 
-federation.setOutboxDispatcher("/users/{identifier}/outbox", async (ctx, _id) => {
-	const actorUri = ctx.getActorUri(apUsername);
-	const items = Array.from(await getPosts()).map(post => {
-		const article = postToArticle(ctx, post);
-		if (post.deletedAt) return new Delete({
-			id: new URL("#activity", article.id!),
-			actor: actorUri,
-			object: article.id
-		});
-		return new Create({
-			id: new URL("#activity", article.id!),
-			actor: actorUri,
-			object: article
-		});
-	});
-	return { items };
-});
-
 federation.setFollowersDispatcher("/users/{identifier}/followers", async (_ctx, id) => {
 	if (id !== apUsername) return null;
 	const items: Recipient[] = [];
@@ -218,7 +199,7 @@ function postToArticle(ctx: Context<unknown>, post: Omit<DatabasePost, "visits">
 export async function sync(ctx: Request | RequestContext<unknown>) {
 	if (ctx instanceof Request) ctx = federation.createContext(ctx);
 	console.log("Federating posts...");
-  	const actorUri = ctx.getActorUri(apUsername);
+	const actorUri = ctx.getActorUri(apUsername);
 	const syncedPosts = new Set<string>();
 	const currentPosts = new Set<string>();
 	for (const post of await getPosts()) {
