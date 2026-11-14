@@ -8,20 +8,10 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { Temporal } from "@js-temporal/polyfill";
-import { configure, getConsoleSink } from "@logtape/logtape";
 import { apUsername, dataDir, debugFlag, password, siteDescription, siteName } from "./constants";
 import { addFollower, getPostById, getPosts, getProfile, hostHasFollower, setProfile, deleteFollower, updatePostLastSyncByIds, addComment, getCommentAuthorUrl, updateComment, deleteComment, syncDatabase, getCommentWithPostById, getFollowers } from "./db";
 import { DatabasePost } from "./db/schema";
 import { createFederationDebugger } from "@fedify/debugger";
-
-configure({
-  sinks: { console: getConsoleSink() },
-  filters: {},
-  loggers: [
-    { category: "fedify",  sinks: ["console"], lowestLevel: "info" },
-    { category: ["logtape", "meta"],  sinks: ["console"], lowestLevel: "error" },
-  ],
-});
 
 const db = new DatabaseSync("data/fedify.db");
 const kv = new SqliteKvStore(db);
