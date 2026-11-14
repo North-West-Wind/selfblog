@@ -69,6 +69,14 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, id) => {
 
 federation
 	.setInboxListeners("/users/{identifier}/inbox", "/inbox")
+	.setSharedKeyDispatcher(async (ctx) => {
+		if (!apUsername) return null;
+		const keyPairs = await ctx.getActorKeyPairs(apUsername);
+		return {
+			privateKey: keyPairs[0].privateKey,
+			keyId: keyPairs[0].keyId
+		};
+	})
 	.on(Follow, async (ctx, follow) => {
 		if (follow.id == null || follow.actorId == null || follow.objectId == null) return;
 		const parsed = ctx.parseUri(follow.objectId);
